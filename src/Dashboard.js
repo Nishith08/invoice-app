@@ -493,9 +493,9 @@ function Dashboard({ role, department, onLogout }) {
               <th>Invoice No.</th>
               <th>Invoice Amount</th>
               <th>Current Role</th>
-              <th>Document</th>
+              <th style={{ textAlign: 'center' }}>Document</th>
               <th>Comment</th>
-              <th>Actions</th>
+              <th style={{ textAlign: 'center' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -511,39 +511,65 @@ function Dashboard({ role, department, onLogout }) {
                 <td>{inv_no}</td>
                 <td>{inv_amt}</td>
                 <td>{current_role}</td>
-                <td>
+                <td style={{ textAlign: 'center' }}>
                   <a href={`http://localhost:8000${document_url}`} target="_blank" rel="noopener noreferrer">
-                    <button className="dashboard-btn dashboard-view-btn">View Document</button>
+                    <button 
+                      className="dashboard-btn dashboard-view-btn" 
+                      title="View Document"
+                      style={{ padding: '6px', minWidth: 'auto', width: '32px', height: '32px' }}
+                    >
+                      <i className="fas fa-file-alt" style={{ color: 'white', fontSize: '0.9rem' }}></i>
+                    </button>
                   </a>
                 </td>
                 <td>{role === 'admin' ? comment : null}</td>
-                <td>
-                  <button
-                    className="dashboard-btn dashboard-history-btn"
-                    onClick={() => {
-                      setShowInvoiceHistory(true);
-                      setHistoryInvoiceId(id);
-                    }}
-                  >
-                    History
-                  </button>
-                  {role === 'final_accountant' && status === 'completed' && (
+                <td style={{ textAlign: 'center' }}>
+                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
                     <button
-                      className="dashboard-btn dashboard-final-btn"
+                      className="dashboard-btn dashboard-history-btn"
                       onClick={() => {
-                        setFinalModalInvoiceId(id);
-                        setFinalModalOpen(true);
+                        setShowInvoiceHistory(true);
+                        setHistoryInvoiceId(id);
                       }}
+                      title="View History"
+                      style={{ padding: '6px', minWidth: 'auto', width: '32px', height: '32px' }}
                     >
-                      Final Upload
+                      <i className="fas fa-history" style={{ color: 'white', fontSize: '0.9rem' }}></i>
                     </button>
-                  )}
-                  {role !== 'admin' && current_role === role && status !== 'completed' && (
-                    <>
-                      <button className="dashboard-btn dashboard-approve-btn" onClick={() => handleAction(id, 'approve')}>Approve</button>
-                      <button className="dashboard-btn dashboard-reject-btn" onClick={() => handleAction(id, 'reject')}>Reject</button>
-                    </>
-                  )}
+                    {role === 'final_accountant' && status === 'completed' && (
+                      <button
+                        className="dashboard-btn dashboard-final-btn"
+                        onClick={() => {
+                          setFinalModalInvoiceId(id);
+                          setFinalModalOpen(true);
+                        }}
+                        title="Upload Final Document"
+                        style={{ padding: '6px', minWidth: 'auto', width: '32px', height: '32px' }}
+                      >
+                        <i className="fas fa-upload" style={{ color: 'white', fontSize: '0.9rem' }}></i>
+                      </button>
+                    )}
+                    {role !== 'admin' && current_role === role && status !== 'completed' && (
+                      <>
+                        <button 
+                          className="dashboard-btn dashboard-approve-btn" 
+                          onClick={() => handleAction(id, 'approve')}
+                          title="Approve Invoice"
+                          style={{ padding: '6px', minWidth: 'auto', width: '32px', height: '32px' }}
+                        >
+                          <i className="fas fa-check" style={{ color: 'white', fontSize: '0.9rem' }}></i>
+                        </button>
+                        <button 
+                          className="dashboard-btn dashboard-reject-btn" 
+                          onClick={() => handleAction(id, 'reject')}
+                          title="Reject Invoice"
+                          style={{ padding: '6px', minWidth: 'auto', width: '32px', height: '32px' }}
+                        >
+                          <i className="fas fa-times" style={{ color: 'white', fontSize: '0.9rem' }}></i>
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
