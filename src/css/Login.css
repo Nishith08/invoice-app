@@ -9,32 +9,68 @@ body {
   height: 100vh;
 }
 
+.mobile-top-logo {
+  display: none;
+}
+
 /* Responsive: For screens <= 768px (tablets, mobiles) */
 @media only screen and (max-width: 768px) {
   .split-screen {
     flex-direction: column;
   }
 
+  /* hide the large left panel on small screens but show a compact mobile brand in the login card */
   .split.left {
-    display: none; /* Optionally: stack above using 'order: 2' */
+    display: none;
   }
 
   .split.right {
     flex: none;
     width: 100vw;
     min-height: 100vh;
-    justify-content: flex-start;
-    align-items: flex-start;
-    background: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    background: linear-gradient(180deg, #4158d0 0%, #c850c0 100%);
+  }
+
+  .mobile-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
   }
 
   .login-container {
-    margin: 0 auto;
-    max-width: 100vw;
-    min-height: 100vh;
-    box-shadow: none;
-    border-radius: 0;
-    padding: 24px 10vw;
+    margin: 0 16px;
+    max-width: 420px;
+    min-height: auto;
+    box-shadow: 0 12px 40px rgba(16,24,40,0.12);
+    border-radius: 18px;
+    padding: 28px 20px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.95), #fbfcff);
+    transform: translateY(0);
+    transition: transform 220ms ease, box-shadow 220ms ease;
+  }
+
+  .mobile-top-logo {
+    position: absolute;
+    top: 18px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+    box-shadow: 0 10px 30px rgb(42 43 47 / 65%);
+    margin: 0 16px;
+    border-radius: 14px;
+  }
+
+  .mobile-top-logo .brand-logo.small {
+    width: 175px;
+    padding: 8px;
+    border-radius: 12px;
   }
 }
 .split {
@@ -45,13 +81,47 @@ body {
 }
 
 .left {
- /* background: linear-gradient(120deg, #19224B 0%, #BC8F32 100%); */
- background: linear-gradient(120deg, #4158d0 0%, #c850c0 100%);
+ background: linear-gradient(120deg, #2d345d 0%, #545e2b 50%, #d19723 100%);
+ /* background: #BC8F32; */
+ /* background: linear-gradient(120deg, #4158d0 0%, #9c50c8 100%); */
   color: #fff;
 }
 
 .brand-box {
-  text-align: center;
+    text-align: center;
+    /* box-shadow: 0 8px 20px rgb(56 58 71 / 80%); */
+    box-shadow: 0 8px 20px rgb(21 22 24 / 86%);
+    padding: 10px 33px 10px 40px;
+    border-radius: 18px;
+}
+
+.brand-logo {
+  /* width: 96px;
+  height: 96px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  border-radius: 18px;
+  background: white;
+  box-shadow: 0 8px 20px rgba(65,88,208,0.12);
+  margin-bottom: 16px; */
+      width: 250px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 18px;
+}
+
+.brand-box h1 {
+  margin: 8px 0 6px;
+  font-size: 2.25rem;
+  letter-spacing: -0.02em;
+}
+
+.brand-box p {
+  opacity: 0.95;
+  font-size: 1rem;
 }
 
 .right {
@@ -66,6 +136,28 @@ body {
   border-radius: 12px;
 }
 
+.mobile-brand {
+  display: none;
+}
+
+.mobile-brand .brand-logo.small {
+  width: 44px;
+  height: 44px;
+  padding: 6px;
+  border-radius: 10px;
+  box-shadow: 0 6px 16px rgba(65,88,208,0.08);
+}
+
+.mobile-welcome {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.mobile-sub {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
 .login-title {
   margin-bottom: 1.5rem;
   text-align: center;
@@ -78,6 +170,28 @@ body {
   flex-direction: column;
   gap: 15px;
 }
+
+.login-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #4b5563;
+  font-size: 0.95rem;
+}
+
+.forgot-link {
+  color: #4158d0;
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+.forgot-link:hover{ text-decoration: underline; }
 
 .login-label {
   font-size: 1rem;
@@ -99,7 +213,7 @@ body {
 }
 
 .login-btn {
-  background: #4158d0;
+  background: #2d345d;
   color: #fff;
   padding: 12px;
   border: none;
@@ -112,14 +226,20 @@ body {
 }
 
 .login-btn:hover {
-  background: #c850c0;
+  background: #BC8F32;
 }
 
 .login-error {
-  color: #fff;
-  background: #f87171;
-  padding: 8px;
-  border-radius: 5px;
-  margin-bottom: 10px;
-  text-align: center;
+  color: #7f1d1d;
+  background: #fee2e2;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  text-align: left;
+  font-weight: 600;
+}
+
+/* subtle focus for inputs */
+.login-input:focus {
+  box-shadow: 0 4px 18px rgba(65,88,208,0.08);
 }

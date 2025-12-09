@@ -59,7 +59,7 @@ function App() {
   }
 
   return (
-    <div className="app-wrapper">
+    <div className="app-wrapper" style={{ overflow: "hidden", height: "100vh" }}>
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Dashboard role={userRole} department={userDepartment} onLogout={handleLogout} />} />
