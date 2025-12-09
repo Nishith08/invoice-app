@@ -308,6 +308,9 @@ function Dashboard({ role, department, onLogout }) {
   const [showDocModal, setShowDocModal] = useState(false);
   const [docModalFiles, setDocModalFiles] = useState(null);
 
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const [kycRequired, setKycRequired] = useState("no");
   const [kycFiles, setKycFiles] = useState([]);
 
@@ -401,6 +404,7 @@ function Dashboard({ role, department, onLogout }) {
       );
     });
     setFilteredInvoices(filtered);
+    setCurrentPage(1);
   }, [filters, invoices]);
 
   const handleFilterChange = (key, value) => {
@@ -595,6 +599,20 @@ function Dashboard({ role, department, onLogout }) {
     setError("");
     setShowCreateModal(true);
   };
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredInvoices.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedInvoices = filteredInvoices.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  );
+
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
 
   if (showInvoiceHistory && historyInvoiceId) {
     return (
@@ -1169,7 +1187,7 @@ function Dashboard({ role, department, onLogout }) {
                 <td colSpan="14">No invoices found</td>
               </tr>
             ) : (
-              filteredInvoices.map(
+              paginatedInvoices.map(
                 (
                   {
                     id,
@@ -1188,7 +1206,7 @@ function Dashboard({ role, department, onLogout }) {
                   i
                 ) => (
                   <tr key={id}>
-                    <td>{i + 1}</td>
+                    <td>{startIndex + i + 1}</td>
                     <td style={{ textAlign: "center" }}>
                       <div
                         style={{
@@ -1373,6 +1391,54 @@ function Dashboard({ role, department, onLogout }) {
             )}
           </tbody>
         </table>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginTop: 12,
+            gap: 12,
+            flexWrap: "wrap",
+          }}
+        >
+          <div style={{ color: "#555" }}>
+            Showing {filteredInvoices.length === 0 ? 0 : startIndex + 1} -
+            {" "}
+            {Math.min(startIndex + paginatedInvoices.length, filteredInvoices.length)} of {filteredInvoices.length}
+          </div>
+
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <button
+              className="dashboard-btn"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage <= 1}
+              style={{ padding: "6px 10px" }}
+            >
+              Prev
+            </button>
+
+            {Array.from({ length: totalPages }).map((_, idx) => (
+              <button
+                key={idx}
+                className="dashboard-btn"
+                onClick={() => setCurrentPage(idx + 1)}
+                disabled={currentPage === idx + 1}
+                style={{ padding: "6px 10px" }}
+              >
+                {idx + 1}
+              </button>
+            ))}
+
+            <button
+              className="dashboard-btn"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages || 1, p + 1))}
+              disabled={currentPage >= totalPages}
+              style={{ padding: "6px 10px" }}
+            >
+              Next
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
