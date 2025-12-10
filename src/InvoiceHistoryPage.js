@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-function InvoiceHistoryPage({ invoiceId, onBack }) {
+function InvoiceHistoryPage({role, invoiceId, onBack }) {
   const [invNo, setInvNo] = useState("");
   const [invoices, setInvoices] = useState([]);
 
@@ -76,6 +76,27 @@ function InvoiceHistoryPage({ invoiceId, onBack }) {
         </div>
 
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          {role === 'final_accountant' && (
+            <button
+              onClick={() => window.print()}
+              aria-label="Print"
+              title="Print"
+              style={{
+                background: 'white',
+                color: '#085EE3',
+                padding: '6px 12px',
+                borderRadius: 6,
+                border: 'none',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8
+              }}
+            >
+              <i className="fas fa-print" aria-hidden="true" style={{ color: '#085EE3', fontSize: 14 }}></i>
+             
+            </button>
+          )}
           <button
             onClick={onBack}
             aria-label="Back"

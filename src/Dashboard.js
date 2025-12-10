@@ -618,6 +618,7 @@ function Dashboard({ role, department, onLogout }) {
     return (
       <InvoiceHistoryPage
         invoiceId={historyInvoiceId}
+        role={role}
         onBack={() => {
           setShowInvoiceHistory(false);
           setHistoryInvoiceId(null);
