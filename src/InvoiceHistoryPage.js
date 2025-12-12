@@ -12,7 +12,7 @@ function InvoiceHistoryPage({role, invoiceId, onBack }) {
   const [currentDocs, setCurrentDocs] = useState([]);
 
   useEffect(() => {
-    fetch(`http://192.168.2.212:8000/api/logs/invoice/${invoiceId}`, {
+    fetch(`http://192.168.2.165:8000/api/logs/invoice/${invoiceId}`, {
       headers: { "Authorization": "Bearer " + localStorage.getItem("auth_token") }
     })
       .then(res => res.json())
@@ -284,7 +284,7 @@ function InvoiceHistoryPage({role, invoiceId, onBack }) {
 
                   {/* View */}
                   <a
-                    href={`http://192.168.2.212:8000/storage/${doc}`}
+                    href={`http://192.168.2.165:8000/storage/${doc}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={primaryButtonStyle}
@@ -294,7 +294,7 @@ function InvoiceHistoryPage({role, invoiceId, onBack }) {
 
                   {/* Download */}
                   <a
-                    href={`http://192.168.2.212:8000/api/download/${doc}`}
+                    href={`http://192.168.2.165:8000/api/download/${doc}`}
                     style={linkButtonStyle}
                   >
                     ⬇️ Download

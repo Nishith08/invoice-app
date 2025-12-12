@@ -7,7 +7,7 @@ function NotificationBell({ role, onViewInvoiceHistory }) {
 
   useEffect(() => {
     if (!role) return;
-    fetch(`http://192.168.2.212:8000/api/logs/latest?role=${role}`, {
+    fetch(`http://192.168.2.165:8000/api/logs/latest?role=${role}`, {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('auth_token') }
     })
       .then(res => res.json())
@@ -18,7 +18,7 @@ function NotificationBell({ role, onViewInvoiceHistory }) {
   }, [role, showDropdown]);
 
   const markAsSeen = () => {
-    fetch(`http://192.168.2.212:8000/api/logs/mark-seen?role=${role}`, {
+    fetch(`http://192.168.2.165:8000/api/logs/mark-seen?role=${role}`, {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('auth_token') }
     }).then(() => setUnseen(false));
