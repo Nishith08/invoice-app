@@ -1385,7 +1385,17 @@ function Dashboard({ role, department, onLogout }) {
                         ></i>
                       </button>
                     </td>
-                    <td>{comment}</td>
+                    <td
+                      title={comment}
+                      style={{
+                        maxWidth: 200,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {comment ? (comment.length > 20 ? comment.slice(0, 20) + '...' : comment) : ''}
+                    </td>
                   </tr>
                 )
               )
