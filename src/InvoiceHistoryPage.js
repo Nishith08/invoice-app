@@ -11,8 +11,17 @@ function InvoiceHistoryPage({role, invoiceId, onBack }) {
   const [showDocModal, setShowDocModal] = useState(false);
   const [currentDocs, setCurrentDocs] = useState([]);
 
+  // Mapping for role display
+  const roleDisplayMap = {
+    admin: "Marketing Department",
+    accounts_1st: "Account Office",
+    accounts_2nd: "CFAO",
+    accounts_3rd: "President",
+    final_accountant: "Account Office 2",
+  };
+
   useEffect(() => {
-    fetch(`http://192.168.2.165:8000/api/logs/invoice/${invoiceId}`, {
+    fetch(`http://10.160.208.67:8000/api/logs/invoice/${invoiceId}`, {
       headers: { "Authorization": "Bearer " + localStorage.getItem("auth_token") }
     })
       .then(res => res.json())
@@ -146,6 +155,19 @@ function InvoiceHistoryPage({role, invoiceId, onBack }) {
             {/* ========== SUMMARY TABLE ========== */}
             <table style={tableStyle}>
               <tbody>
+{/* Show final document if present */}
+      {invoice?.final_document && (
+        <div style={{ margin: '14px 0' }}>
+          <a
+            href={`http://10.160.208.67:8000/storage/${invoice.final_document}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#28A745', fontWeight: 600 }}
+          >
+            View Final Document
+          </a>
+        </div>
+      )}
 
                 <tr>
                   <td style={cellStyle}><b>Company:</b></td>
@@ -181,7 +203,7 @@ function InvoiceHistoryPage({role, invoiceId, onBack }) {
 
                 <tr>
                   <td style={cellStyle}><b>Current Role:</b></td>
-                  <td style={cellStyle}>{invoice.current_role}</td>
+                  <td style={cellStyle}>{roleDisplayMap[invoice.current_role] || invoice.current_role}</td>
 
                   <td style={cellStyle}><b>Comment:</b></td>
                   <td style={{ ...cellStyle, background: changed("comment") ? "#ffe5a0" : "" }}>
@@ -223,7 +245,7 @@ function InvoiceHistoryPage({role, invoiceId, onBack }) {
                       {invoice.logs.map(log => (
                         <tr key={log.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
                           <td style={cellStyle}>{new Date(log.created_at).toLocaleString()}</td>
-                          <td style={cellStyle}>{log.user?.name || log.role}</td>
+                          <td style={cellStyle}>{log.user?.name || (roleDisplayMap[log.role] || log.role)}</td>
                           <td style={cellStyle}><b>{log.action.toUpperCase()}</b></td>
                           <td style={cellStyle}>{log.comment || "-"}</td>
                         </tr>
@@ -284,7 +306,7 @@ function InvoiceHistoryPage({role, invoiceId, onBack }) {
 
                   {/* View */}
                   <a
-                    href={`http://192.168.2.165:8000/storage/${doc}`}
+                    href={`http://10.160.208.67:8000/storage/${doc}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={primaryButtonStyle}
@@ -294,7 +316,8 @@ function InvoiceHistoryPage({role, invoiceId, onBack }) {
 
                   {/* Download */}
                   <a
-                    href={`http://192.168.2.165:8000/api/download/${doc}`}
+                    href={`http://10.160.208.67:8000/api/download/${doc}`}
+                    download
                     style={linkButtonStyle}
                   >
                     ⬇️ Download

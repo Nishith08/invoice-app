@@ -8,6 +8,7 @@ import Login from './Login';
 function App() {
   const [userRole, setUserRole] = useState(localStorage.getItem('user_role'));
   const [userDepartment, setUserDepartment] = useState(localStorage.getItem('user_department'));
+  const [userName, setUserName] = useState(localStorage.getItem('user_name'));
   const [authToken, setAuthToken] = useState(localStorage.getItem('auth_token'));
 
   useEffect(() => {
@@ -15,25 +16,31 @@ function App() {
       localStorage.setItem('user_role', userRole);
 
       localStorage.setItem('user_department', userDepartment);
+      localStorage.setItem('user_name', userName);
       localStorage.setItem('auth_token', authToken);
     } else {
       localStorage.removeItem('user_role');
       localStorage.removeItem('user_department');
+      localStorage.removeItem('user_name');
       localStorage.removeItem('auth_token');
     }
-  }, [userRole, authToken, userDepartment]);
+  }, [userRole, authToken, userDepartment, userName]);
 
   function handleLogin(user) {
     setUserRole(user.role);
     setUserDepartment(user.department);
+    setUserName(user.name);
     setAuthToken(localStorage.getItem('auth_token'));
   }
 
   function handleLogout() {
     localStorage.removeItem('user_role');
     localStorage.removeItem('user_department');
+    localStorage.removeItem('user_name');
     localStorage.removeItem('auth_token');
     setUserRole(null);
+    setUserDepartment(null);
+    setUserName(null);
     setAuthToken(null);
   }
 
@@ -62,7 +69,7 @@ function App() {
     <div className="app-wrapper" style={{ overflow: "hidden", height: "100vh" }}>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Dashboard role={userRole} department={userDepartment} onLogout={handleLogout} />} />
+          <Route path="/" element={<Dashboard role={userRole} department={userDepartment} userName={userName} onLogout={handleLogout} />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
        

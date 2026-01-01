@@ -1,4 +1,4 @@
-const API_BASE = 'http://192.168.2.165:8000/api';
+const API_BASE = 'http://10.160.208.67:8000/api';
 //const API_BASE = 'http://localhost:8000/api';
 async function authFetch(url, options = {}) {
   const token = localStorage.getItem('auth_token');

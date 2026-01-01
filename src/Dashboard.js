@@ -92,7 +92,7 @@ function ViewDocumentsModal({ open, onClose, documentField }) {
               <div style={{ display: "flex", gap: "10px" }}>
                 {/* VIEW */}
                 <a
-                  href={`http://192.168.2.165:8000/storage/${doc}`}
+                  href={`http://10.160.208.67:8000/storage/${doc}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
@@ -108,7 +108,7 @@ function ViewDocumentsModal({ open, onClose, documentField }) {
 
                 {/* DOWNLOAD */}
                 <a
-                  href={`http://192.168.2.165:8000/api/download/${doc}`}
+                  href={`http://10.160.208.67:8000/api/download/${doc}`}
                   download
                   style={{
                     background: "#28a745",
@@ -134,10 +134,19 @@ function NotificationBell({ role, onViewInvoiceHistory }) {
   const [unseen, setUnseen] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
 
+  // Mapping for role display
+  const roleDisplayMap = {
+    admin: "Marketing Department",
+    accounts_1st: "Account Office",
+    accounts_2nd: "CFAO",
+    accounts_3rd: "President",
+    final_accountant: "Account Office 2",
+  };
+
   useEffect(() => {
     if (!role) return;
     fetch(
-      `http://192.168.2.165:8000/api/logs/latest?role=${role}`,
+      `http://10.160.208.67:8000/api/logs/latest?role=${role}`,
       {
         headers: {
           Authorization: "Bearer " + localStorage.getItem("auth_token"),
@@ -153,7 +162,7 @@ function NotificationBell({ role, onViewInvoiceHistory }) {
 
   const markAsSeen = () => {
     fetch(
-      `http://192.168.2.165:8000/api/logs/mark-seen?role=${role}`,
+      `http://10.160.208.67:8000/api/logs/mark-seen?role=${role}`,
       {
         method: "POST",
         headers: {
@@ -253,7 +262,7 @@ function NotificationBell({ role, onViewInvoiceHistory }) {
                   {log.invoice?.title + " (" + log.invoice.department + ")" ||
                     "No title"}
                 </a>
-                <b>{log.role}</b> <em>{log.action.toUpperCase()}</em> :{" "}
+                <b>{roleDisplayMap[log.role] || log.role}</b> <em>{log.action.toUpperCase()}</em> :{" "}
                 {log.comment || "(no comment)"}
                 <div style={{ fontSize: "0.85em", color: "#666" }}>
                   {new Date(log.created_at).toLocaleString()}
@@ -267,7 +276,7 @@ function NotificationBell({ role, onViewInvoiceHistory }) {
   );
 }
 
-function Dashboard({ role, department, onLogout }) {
+function Dashboard({ role, department, userName, onLogout }) {
   const [invoices, setInvoices] = useState([]);
   const [filteredInvoices, setFilteredInvoices] = useState([]);
   const [filters, setFilters] = useState({
@@ -277,6 +286,7 @@ function Dashboard({ role, department, onLogout }) {
     inv_type: "",
     inv_no: "",
     inv_amt: "",
+    created_at: "",
     current_role: "",
     comment: "",
   });
@@ -310,7 +320,8 @@ function Dashboard({ role, department, onLogout }) {
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPageOption, setItemsPerPageOption] = useState(10);
   const [kycRequired, setKycRequired] = useState("no");
   const [kycFiles, setKycFiles] = useState([]);
 
@@ -319,12 +330,31 @@ function Dashboard({ role, department, onLogout }) {
   const [selectedRole, setSelectedRole] = useState("");
   const [roleError, setRoleError] = useState(false);
 
+  // Role hierarchy for selection
+  const roleHierarchy = ['admin', 'accounts_1st', 'accounts_2nd', 'accounts_3rd'];
+  let selectableRoles;
+  if (role === 'final_accountant') {
+    selectableRoles = ['admin', 'accounts_1st', 'accounts_2nd', 'accounts_3rd'];
+  } else {
+    const index = roleHierarchy.indexOf(role);
+    selectableRoles = index > 0 ? roleHierarchy.slice(0, index) : [];
+  }
+
+  // Mapping for current_role display
+  const roleDisplayMap = {
+    admin: "Marketing Department",
+    accounts_1st: "Account Office",
+    accounts_2nd: "CFAO",
+    accounts_3rd: "President",
+    final_accountant: "Account Office 2",
+  };
+
   useEffect(() => {
     async function showRejectNotifications() {
       if (!role) return;
       try {
         const res = await fetch(
-          `http://192.168.2.165:8000/api/logs/latest?role=${role}`,
+          `http://10.160.208.67:8000/api/logs/latest?role=${role}`,
           {
             headers: {
               Authorization: "Bearer " + localStorage.getItem("auth_token"),
@@ -351,13 +381,19 @@ function Dashboard({ role, department, onLogout }) {
                 }
               }
               console.log("Parsed rejectedTo_role:", rejectedTo);
+              // if (
+              //   Array.isArray(rejectedTo) &&
+              //   rejectedTo.length > 0 &&
+              //   rejectedTo[rejectedTo.length - 1] === role &&
+              //   invoice?.status === "rejected"
+              // ) {
               if (Array.isArray(rejectedTo) && rejectedTo.includes(role)) {
                 toast(
-                  <div>
+                  <div> 
                     <strong>Invoice Rejected</strong>
                     <div>Reason: {log.query || log.comment || "-"}</div>
                     <div>Invoice: {invoice?.title || "No title"}</div>
-                    <div>By: {log.user?.name || log.role}</div>
+                    <div>By: {log.user?.name || (roleDisplayMap[log.role] || log.role)}</div>
                   </div>,
                   { type: "error", position: "top-right", autoClose: 8000 }
                 );
@@ -395,6 +431,9 @@ function Dashboard({ role, department, onLogout }) {
         String(invoice.inv_amt || "")
           .toLowerCase()
           .includes(filters.inv_amt.toLowerCase()) &&
+        String(invoice.created_at || "")
+          .toLowerCase()
+          .includes(filters.created_at.toLowerCase()) &&
         String(invoice.current_role || "")
           .toLowerCase()
           .includes(filters.current_role.toLowerCase()) &&
@@ -417,6 +456,7 @@ function Dashboard({ role, department, onLogout }) {
   async function loadInvoices() {
     try {
       const data = await getInvoices(role);
+      console.log("Fetched invoices:", data);
       setInvoices(data);
     } catch {
       setError("Failed to load invoices");
@@ -571,7 +611,7 @@ function Dashboard({ role, department, onLogout }) {
 
     try {
       await fetch(
-        `http://192.168.2.165:8000/api/invoices/${finalModalInvoiceId}/final-upload`,
+        `http://10.160.208.67:8000/api/invoices/${finalModalInvoiceId}/final-upload`,
         {
           method: "POST",
           headers: {
@@ -601,11 +641,12 @@ function Dashboard({ role, department, onLogout }) {
   };
 
   // Pagination calculations
-  const totalPages = Math.ceil(filteredInvoices.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
+  const actualItemsPerPage = itemsPerPageOption === 'all' ? filteredInvoices.length : parseInt(itemsPerPageOption);
+  const totalPages = Math.ceil(filteredInvoices.length / actualItemsPerPage);
+  const startIndex = (currentPage - 1) * actualItemsPerPage;
   const paginatedInvoices = filteredInvoices.slice(
     startIndex,
-    startIndex + itemsPerPage
+    startIndex + actualItemsPerPage
   );
 
   useEffect(() => {
@@ -634,9 +675,7 @@ function Dashboard({ role, department, onLogout }) {
           <img src="/hrzntl.webp" alt="Logo" className="dashboard-logo" />
         </div>
         <h2 className="dashboard-title">
-          {role === "admin"
-            ? "Admin Dashboard (" + department + ")"
-            : `Dashboard - ${role}`}
+          {userName}
         </h2>
         <div className="dashboard-header-actions">
           <div className="mobile-left">
@@ -1025,10 +1064,11 @@ function Dashboard({ role, department, onLogout }) {
                 }}
               >
                 <option value="">-- Select Role --</option>
-                <option value="admin">Admin</option>
-                <option value="accounts_1st">Accounts 1st</option>
-                <option value="accounts_2nd">Accounts 2nd</option>
-                <option value="accounts_3rd">Accounts 3rd</option>
+                {selectableRoles.map(r => (
+                  <option key={r} value={r}>
+                    {roleDisplayMap[r] || r}
+                  </option>
+                ))}
               </select>
               {roleError && (
                 <div style={{ color: "red", fontSize: 13, marginTop: 2 }}>
@@ -1073,6 +1113,25 @@ function Dashboard({ role, department, onLogout }) {
       />
 
       <div className="dashboard-table-wrapper">
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+          <label style={{ fontSize: '14px', color: '#555' }}>
+            Show: 
+            <select 
+              value={itemsPerPageOption} 
+              onChange={(e) => { 
+                const val = e.target.value; 
+                setItemsPerPageOption(val); 
+                setCurrentPage(1); 
+              }}
+              style={{ marginLeft: '5px', padding: '4px 8px', borderRadius: '4px', border: '1px solid #ccc' }}
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={100}>100</option>
+              <option value="all">All</option>
+            </select>
+          </label>
+        </div>
         <table className="dashboard-table">
           <thead>
             <tr>
@@ -1084,6 +1143,7 @@ function Dashboard({ role, department, onLogout }) {
               <th>Invoice Type</th>
               <th>Invoice No.</th>
               <th>Invoice Amount</th>
+              <th>Date</th>
               <th>KYC Required</th>
               <th>KYC Docs</th>
               <th>Current Role</th>
@@ -1153,6 +1213,17 @@ function Dashboard({ role, department, onLogout }) {
                   className="filter-input"
                 />
               </th>
+              <th>
+                <input
+                  type="text"
+                  placeholder="Filter Date"
+                  value={filters.created_at}
+                  onChange={(e) =>
+                    handleFilterChange("created_at", e.target.value)
+                  }
+                  className="filter-input"
+                />
+              </th>
               {/* No filters for KYC for now */}
 
               <th></th>
@@ -1185,7 +1256,7 @@ function Dashboard({ role, department, onLogout }) {
           <tbody>
             {filteredInvoices.length === 0 ? (
               <tr>
-                <td colSpan="14">No invoices found</td>
+                <td colSpan="15">No invoices found</td>
               </tr>
             ) : (
               paginatedInvoices.map(
@@ -1198,11 +1269,13 @@ function Dashboard({ role, department, onLogout }) {
                     inv_type,
                     inv_no,
                     inv_amt,
+                    created_at,
                     kyc_required,
                     kyc_docs,
                     current_role,
                     comment,
                     document,
+                    rej_yesno
                   },
                   i
                 ) => (
@@ -1258,7 +1331,7 @@ function Dashboard({ role, department, onLogout }) {
                               ></i>
                             </button>
                           )}
-                        {role !== "admin" && status !== "completed" && (
+                        {role !== "admin" && role !== "final_accountant" && status !== "completed" && (
                           <>
                             <button
                               className="dashboard-btn dashboard-approve-btn"
@@ -1333,6 +1406,7 @@ function Dashboard({ role, department, onLogout }) {
                     <td>{inv_type}</td>
                     <td>{inv_no}</td>
                     <td>{inv_amt}</td>
+                    <td>{created_at ? new Date(created_at).toLocaleDateString() : ""}</td>
                     <td>
                       {kyc_required
                         ? kyc_required === "yes"
@@ -1363,7 +1437,7 @@ function Dashboard({ role, department, onLogout }) {
                       </button>
                     </td>
 
-                    <td>{current_role}</td>
+                    <td>{roleDisplayMap[current_role] || current_role}</td>
                     <td style={{ textAlign: "center" }}>
                       <button
                         className="dashboard-btn dashboard-view-btn"
