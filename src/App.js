@@ -52,7 +52,7 @@ function App() {
     );
   }
 
-  const allowedRoles = ['admin', 'accounts_1st', 'accounts_2nd', 'accounts_3rd', 'final_accountant'];
+  const allowedRoles = ['admin', 'accounts_1st', 'purchase_office', 'accounts_2nd', 'accounts_3rd', 'final_accountant'];
 
   if (!allowedRoles.includes(userRole)) {
     return (

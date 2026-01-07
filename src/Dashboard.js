@@ -92,7 +92,7 @@ function ViewDocumentsModal({ open, onClose, documentField }) {
               <div style={{ display: "flex", gap: "10px" }}>
                 {/* VIEW */}
                 <a
-                  href={`http://10.160.208.67:8000/storage/${doc}`}
+                  href={`http://192.168.2.166:8000/storage/${doc}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
@@ -108,7 +108,7 @@ function ViewDocumentsModal({ open, onClose, documentField }) {
 
                 {/* DOWNLOAD */}
                 <a
-                  href={`http://10.160.208.67:8000/api/download/${doc}`}
+                  href={`http://192.168.2.166:8000/api/download/${doc}`}
                   download
                   style={{
                     background: "#28a745",
@@ -146,7 +146,7 @@ function NotificationBell({ role, onViewInvoiceHistory }) {
   useEffect(() => {
     if (!role) return;
     fetch(
-      `http://10.160.208.67:8000/api/logs/latest?role=${role}`,
+      `http://192.168.2.166:8000/api/logs/latest?role=${role}`,
       {
         headers: {
           Authorization: "Bearer " + localStorage.getItem("auth_token"),
@@ -162,7 +162,7 @@ function NotificationBell({ role, onViewInvoiceHistory }) {
 
   const markAsSeen = () => {
     fetch(
-      `http://10.160.208.67:8000/api/logs/mark-seen?role=${role}`,
+      `http://192.168.2.166:8000/api/logs/mark-seen?role=${role}`,
       {
         method: "POST",
         headers: {
@@ -322,6 +322,7 @@ function Dashboard({ role, department, userName, onLogout }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [itemsPerPageOption, setItemsPerPageOption] = useState(10);
+  const [poRequired, setPoRequired] = useState("no");
   const [kycRequired, setKycRequired] = useState("no");
   const [kycFiles, setKycFiles] = useState([]);
 
@@ -347,6 +348,7 @@ function Dashboard({ role, department, userName, onLogout }) {
     accounts_2nd: "CFAO",
     accounts_3rd: "President",
     final_accountant: "Account Office 2",
+    purchase_office: "Purchase Office",
   };
 
   useEffect(() => {
@@ -354,7 +356,7 @@ function Dashboard({ role, department, userName, onLogout }) {
       if (!role) return;
       try {
         const res = await fetch(
-          `http://10.160.208.67:8000/api/logs/latest?role=${role}`,
+          `http://192.168.2.166:8000/api/logs/latest?role=${role}`,
           {
             headers: {
               Authorization: "Bearer " + localStorage.getItem("auth_token"),
@@ -456,7 +458,7 @@ function Dashboard({ role, department, userName, onLogout }) {
   async function loadInvoices() {
     try {
       const data = await getInvoices(role);
-      console.log("Fetched invoices:", data);
+      //console.log("Fetched invoices:", data);
       setInvoices(data);
     } catch {
       setError("Failed to load invoices");
@@ -550,6 +552,7 @@ function Dashboard({ role, department, userName, onLogout }) {
   }
 
   async function submitAction() {
+    console.log("Submitting action:11")
     let valid = true;
     if (!actionComment) {
       setCommentError(true);
@@ -564,7 +567,7 @@ function Dashboard({ role, department, userName, onLogout }) {
       } else {
         setQueryError(false);
       }
-      if (!selectedRole) {
+      if (!selectedRole && role !== "purchase_office") {
         setRoleError(true);
         valid = false;
       } else {
@@ -577,10 +580,12 @@ function Dashboard({ role, department, userName, onLogout }) {
     if (!valid) return;
 
     try {
+      //console.log("hiwl",poRequired);
       await actionInvoice(
         actionInvoiceId,
         actionType,
         actionComment,
+        poRequired,
         actionQuery,
         selectedRole
       );
@@ -588,6 +593,7 @@ function Dashboard({ role, department, userName, onLogout }) {
       setActionInvoiceId(null);
       setActionType(null);
       setActionComment("");
+      setPoRequired("no");
       setActionQuery("");
       setSelectedRole("");
       setCommentError(false);
@@ -611,7 +617,7 @@ function Dashboard({ role, department, userName, onLogout }) {
 
     try {
       await fetch(
-        `http://10.160.208.67:8000/api/invoices/${finalModalInvoiceId}/final-upload`,
+        `http://192.168.2.166:8000/api/invoices/${finalModalInvoiceId}/final-upload`,
         {
           method: "POST",
           headers: {
@@ -1020,6 +1026,40 @@ function Dashboard({ role, department, userName, onLogout }) {
             placeholder="Add comment"
             required
           />
+          {role=== "accounts_1st"&& (
+            <>
+            <div className="modal-col">
+            <label
+              className="dashboard-label"
+              style={{ display: "block", marginBottom: 8 }}
+            >
+             Involve Purchase Office?
+            </label>
+
+            <div style={{ display: "flex", gap: "20px", marginBottom: "8px" }}>
+              <label>
+                <input
+                  type="radio"
+                  value="yes"
+                  checked={poRequired === "yes"}
+                  onChange={() => setPoRequired("yes")}
+                />{" "}
+                Yes
+              </label>
+
+              <label>
+                <input
+                  type="radio"
+                  value="no"
+                  checked={poRequired === "no"}
+                  onChange={() => setPoRequired("no")}
+                />{" "}
+                No
+              </label>
+            </div>
+            </div>
+            </>
+          )}
           {commentError && (
             <div style={{ color: "red", fontSize: 13, marginTop: 2 }}>
               Comment is required
@@ -1047,6 +1087,8 @@ function Dashboard({ role, department, userName, onLogout }) {
                   Query is required
                 </div>
               )}
+              {role !== "purchase_office" && (
+              <>
               <label style={{ display: "block", marginTop: 10 }}>
                 Select Role
               </label>
@@ -1074,6 +1116,8 @@ function Dashboard({ role, department, userName, onLogout }) {
                 <div style={{ color: "red", fontSize: 13, marginTop: 2 }}>
                   Role selection is required
                 </div>
+              )}
+              </>
               )}
             </>
           )}
