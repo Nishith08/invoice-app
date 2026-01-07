@@ -466,7 +466,39 @@ function Dashboard({ role, department, userName, onLogout }) {
   }
 
   const handleFileChange = (e) => {
-    setSelectedFiles(Array.from(e.target.files));
+    const files = Array.from(e.target.files || []);
+    setSelectedFiles((prev) => {
+      const combined = [...prev, ...files];
+      const unique = [];
+      const seen = new Set();
+      combined.forEach((f) => {
+        const key = f.name + '|' + f.size + '|' + f.lastModified;
+        if (!seen.has(key)) {
+          seen.add(key);
+          unique.push(f);
+        }
+      });
+      return unique;
+    });
+  };
+  const handleKycFileChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    setKycFiles((prev) => {
+      const combined = [...prev, ...files];
+      const unique = [];
+      const seen = new Set();
+      combined.forEach((f) => {
+        const key = f.name + '|' + f.size + '|' + f.lastModified;
+        if (!seen.has(key)) {
+          seen.add(key);
+          unique.push(f);
+        }
+      });
+      return unique;
+    });
+  };
+  const removeKycFile = (idx) => {
+    setKycFiles((prev) => prev.filter((_, i) => i !== idx));
   };
   const removeFile = (idx) => {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== idx));
@@ -871,7 +903,7 @@ function Dashboard({ role, department, userName, onLogout }) {
                   type="file"
                   className="dashboard-input"
                   multiple
-                  onChange={(e) => setKycFiles(Array.from(e.target.files))}
+                  onChange={handleKycFileChange}
                   style={{
                     width: "100%",
                     padding: "8px 12px",
@@ -880,13 +912,71 @@ function Dashboard({ role, department, userName, onLogout }) {
                     fontSize: "14px",
                   }}
                 />
-
                 {kycFiles.length > 0 && (
-                  <ul style={{ marginTop: 6 }}>
-                    {kycFiles.map((file, idx) => (
-                      <li key={idx}>{file.name}</li>
+                  <>
+                    <div style={{ marginTop: 6, fontSize: 13, color: "#555", marginBottom: 6 }}>
+                      {kycFiles.length} file{kycFiles.length !== 1 ? "s" : ""} chosen
+                    </div>
+                    <div style={{ marginTop: 6 }}>
+                      {kycFiles.map((file, idx) => (
+                        <div
+                          key={idx}
+                          style={{
+                            // display: "flex",
+                            // alignItems: "center",
+                            // justifyContent: "space-between",
+                            background: "#f7f7f7",
+                            // marginBottom: 4,
+                            // padding: "6px 12px",
+                            borderRadius: 4,
+                          }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px" }}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const url = URL.createObjectURL(file);
+                                window.open(url);
+                                setTimeout(() => URL.revokeObjectURL(url), 1000);
+                              }}
+                              title="View file"
+                              style={{
+                                background: "#007bffff",
+                                width: "10%",
+                                border: "none",
+                                cursor: "pointer",
+                                fontSize: 14,
+                                padding: "3px",
+                                margin: 0,
+                                minWidth: 20,
+                              }}
+                            >
+                              View
+                            </button>
+                            <span style={{ maxWidth: 250, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "80%" }}>{file.name}</span>
+                            <button
+                              type="button"
+                              onClick={() => removeKycFile(idx)}
+                              style={{
+                                background: "none",
+                                width: "10%",
+                                border: "none",
+                                color: "#d9534f",
+                                fontSize: 16,
+                                cursor: "pointer",
+                                padding: 0,
+                                margin: 0,
+                              }}
+                              title="Remove file"
+                            >
+                              ✖
+                          </button>
+                          </div>
+                        
+                      </div>
                     ))}
-                  </ul>
+                    </div>
+                  </>
                 )}
               </div>
             )}
@@ -938,57 +1028,92 @@ function Dashboard({ role, department, userName, onLogout }) {
               }}
             />
             <div style={{ marginTop: 8 }}>
+              {selectedFiles.length > 0 && (
+                <div style={{ fontSize: 13, color: "#555", marginBottom: 6 }}>
+                  {selectedFiles.length} file{selectedFiles.length !== 1 ? "s" : ""} chosen
+                </div>
+              )}
               {selectedFiles.map((file, idx) => (
                 <div
                   key={idx}
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
+                    // display: "flex",
+                    // alignItems: "center",
+                    // justifyContent: "space-between",
                     background: "#f7f7f7",
-                    marginBottom: 4,
-                    padding: "6px 12px",
+                    // marginBottom: 4,
+                    // padding: "6px 12px",
                     borderRadius: 4,
                   }}
                 >
-                  <span>{file.name}</span>
-                  <button
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px" }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const url = URL.createObjectURL(file);
+                        window.open(url);
+                        setTimeout(() => URL.revokeObjectURL(url), 1000);
+                      }}
+                      title="View file"
+                      style={{
+                        background: "#007bffff",
+                        width: "10%",
+                        border: "none",
+                        cursor: "pointer",
+                        fontSize: 14,
+                        padding: "3px",
+                        margin: 0,
+                        minWidth: 20,
+                      }}
+                    >
+                      View
+                    </button>
+                    <span style={{ maxWidth: 250, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "80%" }}>{file.name}</span>
+
+                    <button
                     type="button"
                     onClick={() => removeFile(idx)}
                     style={{
                       background: "none",
+                      width: "10%",
                       border: "none",
                       color: "#d9534f",
                       fontSize: 16,
                       cursor: "pointer",
-                      marginLeft: 10,
+                      padding: 0,
+                      margin: 0,
                     }}
                     title="Remove file"
                   >
                     ✖
                   </button>
+                  </div>
+                  
                 </div>
               ))}
             </div>
           </div>
           </div>
-          <button
-            type="submit"
-            className="dashboard-btn"
-            style={{
-              marginTop: "8px",
-              padding: "10px",
-              backgroundColor: "#4158d0",
-              color: "white",
-              border: "none",
-              borderRadius: "6px",
-              cursor: "pointer",
-              fontSize: "16px",
-              fontWeight: "500",
-            }}
-          >
-            {editingInvoice ? "Save Corrections" : "Upload"}
-          </button>
+          <div style={{ display: "flex", justifyContent: "end" }}> 
+            <button
+              type="submit"
+              className="dashboard-btn"
+              style={{
+                marginTop: "8px",
+                width: "100px",
+                padding: "10px",
+                backgroundColor: "#4158d0",
+                color: "white",
+                border: "none",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontSize: "16px",
+                fontWeight: "500",
+              }}
+            >
+              {editingInvoice ? "Save Corrections" : "Upload"}
+            </button>
+          </div>
         </form>
       </Modal>
 
