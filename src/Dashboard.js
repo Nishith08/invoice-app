@@ -92,7 +92,7 @@ function ViewDocumentsModal({ open, onClose, documentField }) {
               <div style={{ display: "flex", gap: "10px" }}>
                 {/* VIEW */}
                 <a
-                  href={`http://192.168.2.166:8000/storage/${doc}`}
+                  href={`http://10.37.214.67:8000/storage/${doc}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
@@ -108,7 +108,7 @@ function ViewDocumentsModal({ open, onClose, documentField }) {
 
                 {/* DOWNLOAD */}
                 <a
-                  href={`http://192.168.2.166:8000/api/download/${doc}`}
+                  href={`http://10.37.214.67:8000/api/download/${doc}`}
                   download
                   style={{
                     background: "#28a745",
@@ -146,7 +146,7 @@ function NotificationBell({ role, onViewInvoiceHistory }) {
   useEffect(() => {
     if (!role) return;
     fetch(
-      `http://192.168.2.166:8000/api/logs/latest?role=${role}`,
+      `http://10.37.214.67:8000/api/logs/latest?role=${role}`,
       {
         headers: {
           Authorization: "Bearer " + localStorage.getItem("auth_token"),
@@ -162,7 +162,7 @@ function NotificationBell({ role, onViewInvoiceHistory }) {
 
   const markAsSeen = () => {
     fetch(
-      `http://192.168.2.166:8000/api/logs/mark-seen?role=${role}`,
+      `http://10.37.214.67:8000/api/logs/mark-seen?role=${role}`,
       {
         method: "POST",
         headers: {
@@ -356,7 +356,7 @@ function Dashboard({ role, department, userName, onLogout }) {
       if (!role) return;
       try {
         const res = await fetch(
-          `http://192.168.2.166:8000/api/logs/latest?role=${role}`,
+          `http://10.37.214.67:8000/api/logs/latest?role=${role}`,
           {
             headers: {
               Authorization: "Bearer " + localStorage.getItem("auth_token"),
@@ -617,7 +617,7 @@ function Dashboard({ role, department, userName, onLogout }) {
 
     try {
       await fetch(
-        `http://192.168.2.166:8000/api/invoices/${finalModalInvoiceId}/final-upload`,
+        `http://10.37.214.67:8000/api/invoices/${finalModalInvoiceId}/final-upload`,
         {
           method: "POST",
           headers: {
