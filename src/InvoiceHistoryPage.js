@@ -21,7 +21,7 @@ function InvoiceHistoryPage({role, invoiceId, onBack }) {
   };
 
   useEffect(() => {
-    fetch(`http://10.37.214.67:8000/api/logs/invoice/${invoiceId}`, {
+    fetch(`http://192.168.2.166:8000/api/logs/invoice/${invoiceId}`, {
       headers: { "Authorization": "Bearer " + localStorage.getItem("auth_token") }
     })
       .then(res => res.json())
@@ -51,7 +51,7 @@ function InvoiceHistoryPage({role, invoiceId, onBack }) {
   const tableStyle = { width: '100%', marginBottom: 14, borderCollapse: 'separate', borderSpacing: '0 6px' };
   const cellStyle = { padding: '8px 10px', verticalAlign: 'top' };
   const actionTableStyle = { width: '100%', borderCollapse: 'collapse' };
-  const primaryButtonStyle = { background: '#007bff', padding: '6px 12px', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' };
+  const primaryButtonStyle = { background: '#007bff', padding: '6px 12px', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', textDecoration: 'none' };
   const linkButtonStyle = { background: '#28a745', color: 'white', padding: '5px 10px', borderRadius: '6px', textDecoration: 'none' };
 
   return (
@@ -159,7 +159,7 @@ function InvoiceHistoryPage({role, invoiceId, onBack }) {
       {invoice?.final_document && (
         <div style={{ margin: '14px 0' }}>
           <a
-            href={`http://10.37.214.67:8000/storage/${invoice.final_document}`}
+            href={`http://192.168.2.166:8000/storage/${invoice.final_document}`}
             target="_blank"
             rel="noopener noreferrer"
             style={{ color: '#28A745', fontWeight: 600 }}
@@ -306,7 +306,7 @@ function InvoiceHistoryPage({role, invoiceId, onBack }) {
 
                   {/* View */}
                   <a
-                    href={`http://10.37.214.67:8000/storage/${doc}`}
+                    href={`http://192.168.2.166:8000/storage/${doc}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={primaryButtonStyle}
@@ -316,7 +316,7 @@ function InvoiceHistoryPage({role, invoiceId, onBack }) {
 
                   {/* Download */}
                   <a
-                    href={`http://10.37.214.67:8000/api/download/${doc}`}
+                    href={`http://192.168.2.166:8000/api/download/${doc}`}
                     download
                     style={linkButtonStyle}
                   >
@@ -326,20 +326,21 @@ function InvoiceHistoryPage({role, invoiceId, onBack }) {
               ))
             )}
 
-            <button
-              onClick={() => setShowDocModal(false)}
-              style={{
-                marginTop: "10px",
-                background: "red",
-                color: "white",
-                padding: "6px 14px",
-                borderRadius: "6px",
-                cursor: "pointer",
-                border: "none"
-              }}
-            >
-              Close
-            </button>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
+              <button
+                onClick={() => setShowDocModal(false)}
+                style={{
+                  background: "red",
+                  color: "white",
+                  padding: "6px 14px",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  border: "none"
+                }}
+              >
+                Close
+              </button>
+            </div>
 
           </div>
         </div>
