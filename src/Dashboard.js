@@ -326,6 +326,9 @@ function Dashboard({ role, department, userName, onLogout }) {
   const [kycRequired, setKycRequired] = useState("no");
   const [kycFiles, setKycFiles] = useState([]);
 
+  // Per-action dyn value (0 = force No, 1 = force Yes, 2 = allow user choice)
+  const [actionDyn, setActionDyn] = useState(0);
+
   // NEW: track if we are making corrections (editing an existing invoice)
   const [editingInvoice, setEditingInvoice] = useState(null);
   const [selectedRole, setSelectedRole] = useState("");
@@ -458,8 +461,12 @@ function Dashboard({ role, department, userName, onLogout }) {
   async function loadInvoices() {
     try {
       const data = await getInvoices(role);
-      //console.log("Fetched invoices:", data);
-      setInvoices(data);
+      console.log("Fetched invoices:", data);
+      if (data.invoices) {
+        setInvoices(data.invoices);
+      } else {
+        setInvoices(data);
+      }
     } catch {
       setError("Failed to load invoices");
     }
@@ -580,6 +587,12 @@ function Dashboard({ role, department, userName, onLogout }) {
     setActionQuery("");
     setCommentError(false);
     setQueryError(false);
+    // Find the invoice and get its dyn value
+    const inv = invoices.find(inv => inv.id === id);
+    const dynVal = inv && typeof inv.dyn !== 'undefined' ? inv.dyn : 0;
+    setActionDyn(dynVal);
+    if (dynVal === 1) setPoRequired("yes");
+    else setPoRequired("no");
     setShowActionModal(true);
   }
 
@@ -1151,7 +1164,7 @@ function Dashboard({ role, department, userName, onLogout }) {
             placeholder="Add comment"
             required
           />
-          {role=== "accounts_1st"&& (
+          {role=== "accounts_1st"&& actionType == "approve" &&(
             <>
             <div className="modal-col">
             <label
@@ -1160,26 +1173,24 @@ function Dashboard({ role, department, userName, onLogout }) {
             >
              Involve Purchase Office?
             </label>
-
             <div style={{ display: "flex", gap: "20px", marginBottom: "8px" }}>
               <label>
                 <input
                   type="radio"
                   value="yes"
-                  checked={poRequired === "yes"}
-                  onChange={() => setPoRequired("yes")}
-                />{" "}
-                Yes
+                  checked={actionDyn === 1 ? true : actionDyn === 0 ? false : poRequired === "yes"}
+                  disabled={actionDyn !== 2}
+                  onChange={() => { if (actionDyn === 2) setPoRequired("yes"); }}
+                /> Yes
               </label>
-
               <label>
                 <input
                   type="radio"
                   value="no"
-                  checked={poRequired === "no"}
-                  onChange={() => setPoRequired("no")}
-                />{" "}
-                No
+                  checked={actionDyn === 0 ? true : actionDyn === 1 ? false : poRequired === "no"}
+                  disabled={actionDyn !== 2}
+                  onChange={() => { if (actionDyn === 2) setPoRequired("no"); }}
+                /> No
               </label>
             </div>
             </div>
