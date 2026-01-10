@@ -85,7 +85,7 @@ function InvoiceHistoryPage({role, invoiceId, onBack }) {
         </div>
 
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          {role === 'final_accountant' && (
+          {role !== 'accounts_1st' && (
             <button
               onClick={() => window.print()}
               aria-label="Print"

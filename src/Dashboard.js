@@ -291,6 +291,7 @@ function Dashboard({ role, department, userName, onLogout }) {
     comment: "",
   });
   const [existingDocs, setExistingDocs] = useState([]);
+  const [existingKycDocs, setExistingKycDocs] = useState([]);
 
   const [title, setTitle] = useState("");
   const [comment, setComment] = useState("");
@@ -551,94 +552,108 @@ function Dashboard({ role, department, userName, onLogout }) {
       kyc: false,
     });
   };
+    async function handleUpload(e) {
+      e.preventDefault();
+      console.log("hello form upload");
 
-  async function handleUpload(e) {
-    e.preventDefault();
-console.log("hello form upload");
-const errors = {
-  title: !title,
-  inv_no: !inv_no,
-  inv_amt: !inv_amt,
-  inv_type: !inv_type,
-  comment: !comment,
-  files: editingInvoice 
-    ? (!selectedFiles.length && !existingDocs.length)
-    : !selectedFiles.length,
-};
-setFieldErrors(errors);
+      const errors = {
+        title: !title,
+        inv_no: !inv_no,
+        inv_amt: !inv_amt,
+        inv_type: !inv_type,
+        comment: !comment,
+        files: editingInvoice
+          ? (!selectedFiles.length && !existingDocs.length)
+          : !selectedFiles.length,
+        kyc: kycRequired === "yes"
+          ? (!kycFiles.length && !existingKycDocs.length)
+          : false,
+      };
 
-if (editingInvoice) {
-  if ((!selectedFiles.length && !existingDocs.length) || !title || !inv_no || !inv_amt || !inv_type || !comment) {
-    setError("All fields are required");
-    return;
-  }
-} else {
-  if (!selectedFiles.length || !title || !inv_no || !inv_amt || !inv_type || !comment) {
-    setError("All fields are required");
-    return;
-  }
-}
-    
+      setFieldErrors(errors);
 
-    if (kycRequired === "yes" && kycFiles.length === 0) {
-      console.log("data24:");
-      setError("Please upload KYC documents when KYC is required.");
-      return;
+      // ----- BASIC VALIDATION -----
+      if (editingInvoice) {
+        if (
+          (!selectedFiles.length && !existingDocs.length) ||
+          !title || !inv_no || !inv_amt || !inv_type || !comment
+        ) {
+          setError("All fields are required");
+          return;
+        }
+         if (kycRequired === "yes" && !kycFiles.length && (!kycFiles.length && !existingKycDocs.length)) {
+        setError("Please upload KYC documents when KYC is required.");
+        return;
+      }
+      } else {
+        if (!selectedFiles.length || !title || !inv_no || !inv_amt || !inv_type || !comment) {
+          setError("All fields are required");
+          return;
+        }
+         if (kycRequired === "yes" && !kycFiles.length ) {
+        setError("Please upload KYC documents when KYC is required.");
+        return;
+      }
+      }
+
+      // ----- KYC VALIDATION -----
+     
+
+      setError("");
+
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("inv_no", inv_no);
+      formData.append("inv_amt", inv_amt);
+      formData.append("inv_type", inv_type);
+      formData.append("comment", comment);
+      formData.append("correction", editingInvoice ? "1" : "0");
+
+      if (editingInvoice && editingInvoice.id) {
+        formData.append("invoice_id", editingInvoice.id);
+      }
+
+      // ----- KYC REQUIRED FLAG -----
+      formData.append("kyc_required", kycRequired);
+
+      // ----- EXISTING KYC DOCS -----
+      existingKycDocs.forEach(path => {
+        formData.append("kyc_docs[]", path);
+      });
+
+      // ----- NEW KYC FILES -----
+      kycFiles.forEach(file => {
+        formData.append("kyc_docs[]", file);
+      });
+
+      // ----- EXISTING INVOICE DOCS -----
+      existingDocs.forEach(path => {
+        formData.append("document[]", path);
+      });
+
+      // ----- NEW INVOICE FILES -----
+      selectedFiles.forEach(file => {
+        formData.append("document[]", file);
+      });
+
+      console.log("Invoice Docs:", formData.getAll("document[]"));
+      console.log("KYC Docs:", formData.getAll("kyc_docs[]"));
+
+      try {
+        await uploadInvoice(formData);
+
+        resetCreateFormState();
+        setEditingInvoice(null);
+        setExistingDocs([]);
+        setExistingKycDocs([]);
+        setShowCreateModal(false);
+        setRefresh(refresh + 1);
+
+      } catch {
+        setError("Upload failed");
+      }
     }
 
-    setError("");
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append("inv_no", inv_no);
-    formData.append("inv_amt", inv_amt);
-    formData.append("inv_type", inv_type);
-    formData.append("comment", comment);
-    formData.append("correction", editingInvoice ? "1" : "0");
-
-    if (editingInvoice && editingInvoice.id) {
-      formData.append("invoice_id", editingInvoice.id);
-    }
-
-    // Only on create invoice
-
-    formData.append("kyc_required", kycRequired);
-    if (kycRequired === "yes") {
-      kycFiles.forEach((f) => formData.append("kyc_docs[]", f));
-    }
-
-    // Combine existing documents with new file names (prefixed with invoices/)
-    // const allDocuments = [
-    //   ...existingDocs,
-    //   ...selectedFiles.map(f => 'invoices/' + f.name)
-    // ];
-
-    // // Send combined documents list as document field
-    // formData.append("document", JSON.stringify(allDocuments));
-
-    // Send actual file objects for upload
-    for (let i = 0; i < existingDocs.length; i++) {
-      formData.append("document[]", existingDocs[i]);
-    }
-    for (let i = 0; i < selectedFiles.length; i++) {
-      formData.append("document[]", selectedFiles[i]);
-    }
-
-    // Log what's being sent
-   // console.log("All Documents combined:", allDocuments);
-  //console.log("FormData document field:", formData.get("document"));
-    console.log("New Files to upload:", formData.getAll("document[]"));
-
-    try {
-      await uploadInvoice(formData);
-      resetCreateFormState();
-      setEditingInvoice(null);
-      setExistingDocs([]);
-      setShowCreateModal(false);
-      setRefresh(refresh + 1);
-    } catch {
-      setError("Upload failed");
-    }
-  }
 
   function handleAction(id, chosenAction) {
     setActionInvoiceId(id);
@@ -738,34 +753,54 @@ if (editingInvoice) {
       alert("Failed to upload final document");
     }
   }
+    const handleOpenCorrectionModal = (invoice) => {
+      setEditingInvoice(invoice);
+      setTitle(invoice.title || "");
+      setInv_no(invoice.inv_no || "");
+      setInv_amt(invoice.inv_amt || "");
+      setInv_type(invoice.inv_type || "");
+      setComment(invoice.comment || "");
+      setSelectedFiles([]);
+      setKycFiles([]);
+      setError("");
 
-  const handleOpenCorrectionModal = (invoice) => {
-    setEditingInvoice(invoice);
-    setTitle(invoice.title || "");
-    setInv_no(invoice.inv_no || "");
-    setInv_amt(invoice.inv_amt || "");
-    setInv_type(invoice.inv_type || "");
-    setComment(invoice.comment || "");
-    setSelectedFiles([]);
-    setError("");
-
-    let docs = [];
-    try {
-      if (Array.isArray(invoice.document)) {
-        docs = invoice.document;
-      } else if (typeof invoice.document === "string") {
-        docs = JSON.parse(invoice.document);
+      // ---- EXISTING INVOICE DOCUMENTS ----
+      let docs = [];
+      try {
+        if (Array.isArray(invoice.document)) {
+          docs = invoice.document;
+        } else if (typeof invoice.document === "string") {
+          docs = JSON.parse(invoice.document);
+        }
+      } catch {
+        docs = invoice.document ? [invoice.document] : [];
       }
-    } catch {
-      docs = invoice.document ? [invoice.document] : [];
-    }
-console.log("Existing Docs1:",  invoice.document)
-//console.log("Existing Docs:", existingDocs)
-    setExistingDocs(docs);   // 👈 NEW
-    setShowCreateModal(true);
-  };
+
+      console.log("Existing Docs:", docs);
+      setExistingDocs(docs);
+
+      // ---- EXISTING KYC DOCUMENTS ----
+      let kyc = [];
+      try {
+        if (Array.isArray(invoice.kyc_docs)) {
+          kyc = invoice.kyc_docs;
+        } else if (typeof invoice.kyc_docs === "string") {
+          kyc = JSON.parse(invoice.kyc_docs);
+        }
+      } catch {
+        kyc = invoice.kyc_docs ? [invoice.kyc_docs] : [];
+      }
+ console.log("Existing KYC Docs:", kyc);
+      setExistingKycDocs(kyc);   // 👈 NEW
+      setKycRequired(invoice.kyc_required || "no");
+
+      setShowCreateModal(true);
+    };
   const removeExistingDoc = (idx) => {
     setExistingDocs(prev => prev.filter((_, i) => i !== idx));
+  };
+  const removeExistingKycDoc = (idx) => {
+  setExistingKycDocs(prev => prev.filter((_, i) => i !== idx));
   };
 
   // Pagination calculations
@@ -996,97 +1031,153 @@ console.log("Existing Docs1:",  invoice.document)
             </div>
             </div>
 
-            {kycRequired === "yes" && (
-              <div className="modal-col">
-                <label
-                  className="dashboard-label"
-                  style={{ display: "block", marginBottom: 8 }}
-                >
-                  Upload KYC Documents
-                </label>
+          {kycRequired === "yes" && (
+            <div className="modal-col">
+              <label className="dashboard-label" style={{ display: "block", marginBottom: 8 }}>
+                Upload KYC Documents
+              </label>
 
-                <input
-                  type="file"
-                  className="dashboard-input"
-                  multiple
-                  onChange={handleKycFileChange}
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    borderRadius: "6px",
-                    border: fieldErrors.kyc ? "2px solid red" : "1px solid #ddd",
-                    fontSize: "14px",
-                  }}
-                />
-                {fieldErrors.kyc && <div style={{ color: "red", fontSize: "13px", marginTop: "4px" }}>This field is required</div>}
-                {kycFiles.length > 0 && (
+              <input
+                type="file"
+                className="dashboard-input"
+                multiple
+                onChange={(e) => {
+                  handleKycFileChange(e);
+                  setFieldErrors(prev => ({ ...prev, kyc: false }));
+                }}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  borderRadius: "6px",
+                  border: fieldErrors.kyc ? "2px solid red" : "1px solid #ddd",
+                  fontSize: "14px",
+                }}
+              />
+
+              {fieldErrors.kyc && (
+                <div style={{ color: "red", fontSize: "13px", marginTop: "4px" }}>
+                  This field is required
+                </div>
+              )}
+
+              <div style={{ marginTop: 8 }}>
+
+                {/* EXISTING KYC DOCS */}
+                {existingKycDocs.length > 0 && (
                   <>
-                    <div style={{ marginTop: 6, fontSize: 13, color: "#555", marginBottom: 6 }}>
-                      {kycFiles.length} file{kycFiles.length !== 1 ? "s" : ""} chosen
+                    <div style={{ fontSize: 13, color: "#555", marginBottom: 6 }}>
+                      Existing KYC Documents
                     </div>
-                    <div style={{ marginTop: 6 }}>
-                      {kycFiles.map((file, idx) => (
-                        <div
-                          key={idx}
-                          style={{
-                            // display: "flex",
-                            // alignItems: "center",
-                            // justifyContent: "space-between",
-                            background: "#f7f7f7",
-                            // marginBottom: 4,
-                            // padding: "6px 12px",
-                            borderRadius: 4,
-                          }}
-                        >
-                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px" }}>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const url = URL.createObjectURL(file);
-                                window.open(url);
-                                setTimeout(() => URL.revokeObjectURL(url), 1000);
-                              }}
-                              title="View file"
-                              style={{
-                                background: "#007bffff",
-                                width: "10%",
-                                border: "none",
-                                cursor: "pointer",
-                                fontSize: 14,
-                                padding: "3px",
-                                margin: 0,
-                                minWidth: 20,
-                              }}
-                            >
-                              View
-                            </button>
-                            <span style={{ maxWidth: 250, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "80%" }}>{file.name}</span>
-                            <button
-                              type="button"
-                              onClick={() => removeKycFile(idx)}
-                              style={{
-                                background: "none",
-                                width: "10%",
-                                border: "none",
-                                color: "#d9534f",
-                                fontSize: 16,
-                                cursor: "pointer",
-                                padding: 0,
-                                margin: 0,
-                              }}
-                              title="Remove file"
-                            >
-                              ✖
+
+                    {existingKycDocs.map((doc, idx) => (
+                      <div key={idx} style={{ background: "#eef5ff", borderRadius: 4 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", padding: 5 }}>
+                          <a
+                            href={`http://192.168.2.166:8000/storage/${doc}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              background: "#007bff",
+                              color: "#fff",
+                              width: "10%",
+                              padding: "5px",
+                              borderRadius: 4,
+                              textDecoration: "none",
+                              fontSize: 13,
+                              display: "flex",
+                              justifyContent: "center",
+                              alignItems: "center",
+                            }}
+                          >
+                            View
+                          </a>
+
+                          <span style={{ width: "80%", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", padding: "5px", display: "flex", alignItems: "center" }}>
+                            KYC {idx + 1}
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={() => removeExistingKycDoc(idx)}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              width: "10%",
+                              margin: "0",
+                              padding: "5px",
+                              color: "#d9534f",
+                              fontSize: 16,
+                              cursor: "pointer",
+                            }}
+                          >
+                            ✖
                           </button>
-                          </div>
-                        
+                        </div>
                       </div>
                     ))}
-                    </div>
                   </>
                 )}
+
+                {/* NEW KYC FILES */}
+                {kycFiles.length > 0 && (
+                  <div style={{ fontSize: 13, color: "#555", margin: "10px 0 6px" }}>
+                    New KYC Files
+                  </div>
+                )}
+
+                {kycFiles.map((file, idx) => (
+                  <div key={idx} style={{ background: "#f7f7f7", borderRadius: 4 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", padding: 5 }}>
+                      <a
+                        type="button"
+                        onClick={() => {
+                          const url = URL.createObjectURL(file);
+                          window.open(url);
+                          setTimeout(() => URL.revokeObjectURL(url), 1000);
+                        }}
+                        style={{
+                          background: "#007bff",
+                              color: "#fff",
+                              width: "10%",
+                              padding: "5px",
+                              borderRadius: 4,
+                              textDecoration: "none",
+                              fontSize: 13,
+                              display: "flex",
+                              justifyContent: "center",
+                              alignItems: "center",
+                        }}
+                      >
+                        View
+                      </a>
+
+                      <span style={{ width: "80%", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", padding: "5px", display: "flex", alignItems: "center" }}>
+                        {file.name}
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() => removeKycFile(idx)}
+                        style={{
+                          background: "none",
+                              border: "none",
+                              width: "10%",
+                              margin: "0",
+                              padding: "5px",
+                              color: "#d9534f",
+                              fontSize: 16,
+                              cursor: "pointer",
+                        }}
+                      >
+                        ✖
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-            )}
+            </div>
+          )}
+
           </div>
 
           <div className="modal-row">
@@ -1145,7 +1236,7 @@ console.log("Existing Docs1:",  invoice.document)
             {fieldErrors.files && <div style={{ color: "red", fontSize: "13px", marginTop: "4px" }}>This field is required</div>}
 
             <div style={{ marginTop: 8 }}>
-            {/* {console.log("Existing Docs:", existingDocs)} */}
+            
               {/* EXISTING FILES */}
               {existingDocs.length > 0 && (
                 <>
@@ -1162,11 +1253,15 @@ console.log("Existing Docs1:",  invoice.document)
                           rel="noopener noreferrer"
                           style={{
                             background: "#007bff",
-                            color: "#fff",
-                            padding: "3px 8px",
-                            borderRadius: 4,
-                            textDecoration: "none",
-                            fontSize: 13,
+                              color: "#fff",
+                              width: "10%",
+                              padding: "5px",
+                              borderRadius: 4,
+                              textDecoration: "none",
+                              fontSize: 13,
+                              display: "flex",
+                              justifyContent: "center",
+                              alignItems: "center",
                           }}
                         >
                           View
@@ -1174,11 +1269,7 @@ console.log("Existing Docs1:",  invoice.document)
 
                         <span
                           style={{
-                            maxWidth: 250,
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                            width: "80%",
+                            width: "80%", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", padding: "5px", display: "flex", alignItems: "center"
                           }}
                         >
                           {`Doc ${idx + 1}`}
@@ -1189,10 +1280,13 @@ console.log("Existing Docs1:",  invoice.document)
                           onClick={() => removeExistingDoc(idx)}
                           style={{
                             background: "none",
-                            border: "none",
-                            color: "#d9534f",
-                            fontSize: 16,
-                            cursor: "pointer",
+                              border: "none",
+                              width: "10%",
+                              margin: "0",
+                              padding: "5px",
+                              color: "#d9534f",
+                              fontSize: 16,
+                              cursor: "pointer",
                           }}
                           title="Remove file"
                         >
@@ -1214,7 +1308,7 @@ console.log("Existing Docs1:",  invoice.document)
               {selectedFiles.map((file, idx) => (
                 <div key={idx} style={{ background: "#f7f7f7", borderRadius: 4 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", padding: "5px" }}>
-                    <button
+                    <a
                       type="button"
                       onClick={() => {
                         const url = URL.createObjectURL(file);
@@ -1223,23 +1317,24 @@ console.log("Existing Docs1:",  invoice.document)
                       }}
                       style={{
                         background: "#007bff",
-                        border: "none",
-                        color: "#fff",
-                        padding: "3px 8px",
-                        borderRadius: 4,
-                        cursor: "pointer",
+                              color: "#fff",
+                              width: "10%",
+                              padding: "5px",
+                              margin: "0",
+                              borderRadius: 4,
+                              textDecoration: "none",
+                              fontSize: 13,
+                              display: "flex",
+                              justifyContent: "center",
+                              alignItems: "center",
                       }}
                     >
                       View
-                    </button>
+                    </a>
 
                     <span
                       style={{
-                        maxWidth: 250,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                        width: "80%",
+                        width: "80%", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", padding: "5px", display: "flex", alignItems: "center"
                       }}
                     >
                       {file.name}
@@ -1250,10 +1345,13 @@ console.log("Existing Docs1:",  invoice.document)
                       onClick={() => removeFile(idx)}
                       style={{
                         background: "none",
-                        border: "none",
-                        color: "#d9534f",
-                        fontSize: 16,
-                        cursor: "pointer",
+                              border: "none",
+                              width: "10%",
+                              margin: "0",
+                              padding: "5px",
+                              color: "#d9534f",
+                              fontSize: 16,
+                              cursor: "pointer",
                       }}
                     >
                       ✖
@@ -1433,7 +1531,7 @@ console.log("Existing Docs1:",  invoice.document)
             <button
               type="button"
               className="dashboard-btn dashboard-approve-btn"
-              onClick={submitAction}
+              onClick={submitAction} style={{ color: '#ffffff' }}
             >
               Submit
             </button>
@@ -1720,6 +1818,8 @@ console.log("Existing Docs1:",  invoice.document)
                                 current_role,
                                 comment,
                                 document,
+                                kyc_required,
+                                kyc_docs,
                               })
                             }
                             title="Make Corrections"
