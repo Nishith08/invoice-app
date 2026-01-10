@@ -290,6 +290,8 @@ function Dashboard({ role, department, userName, onLogout }) {
     current_role: "",
     comment: "",
   });
+  const [existingDocs, setExistingDocs] = useState([]);
+
   const [title, setTitle] = useState("");
   const [comment, setComment] = useState("");
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -334,6 +336,17 @@ function Dashboard({ role, department, userName, onLogout }) {
   const [selectedRole, setSelectedRole] = useState("");
   const [roleError, setRoleError] = useState(false);
 
+  // Field errors for form validation highlighting
+  const [fieldErrors, setFieldErrors] = useState({
+    title: false,
+    inv_no: false,
+    inv_amt: false,
+    inv_type: false,
+    files: false,
+    comment: false,
+    kyc: false,
+  });
+
   // Role hierarchy for selection
   const roleHierarchy = ['admin', 'accounts_1st', 'accounts_2nd', 'accounts_3rd'];
   let selectableRoles;
@@ -371,10 +384,10 @@ function Dashboard({ role, department, userName, onLogout }) {
         if (data.logs && data.logs.length > 0) {
           data.logs.forEach((log) => {
             if (log.action === "reject" && log.seen === 0) {
-              console.log(
-                "Checking for rejection notifications for role:",
-                role
-              );
+              // console.log(
+              //   "Checking for rejection notifications for role:",
+              //   role
+              // ); 
               const invoice = log.invoice;
               let rejectedTo = invoice?.rejectedTo_role;
 
@@ -385,7 +398,7 @@ function Dashboard({ role, department, userName, onLogout }) {
                   rejectedTo = [];
                 }
               }
-              console.log("Parsed rejectedTo_role:", rejectedTo);
+              //console.log("Parsed rejectedTo_role:", rejectedTo);
               // if (
               //   Array.isArray(rejectedTo) &&
               //   rejectedTo.length > 0 &&
@@ -461,7 +474,7 @@ function Dashboard({ role, department, userName, onLogout }) {
   async function loadInvoices() {
     try {
       const data = await getInvoices(role);
-      console.log("Fetched invoices:", data);
+      //console.log("Fetched invoices:", data);
       if (data.invoices) {
         setInvoices(data.invoices);
       } else {
@@ -528,16 +541,44 @@ function Dashboard({ role, department, userName, onLogout }) {
     setShowCreateModal(false);
     setEditingInvoice(null);
     resetCreateFormState();
+    setFieldErrors({
+      title: false,
+      inv_no: false,
+      inv_amt: false,
+      inv_type: false,
+      files: false,
+      comment: false,
+      kyc: false,
+    });
   };
 
   async function handleUpload(e) {
     e.preventDefault();
+console.log("hello form upload");
+const errors = {
+  title: !title,
+  inv_no: !inv_no,
+  inv_amt: !inv_amt,
+  inv_type: !inv_type,
+  comment: !comment,
+  files: editingInvoice 
+    ? (!selectedFiles.length && !existingDocs.length)
+    : !selectedFiles.length,
+};
+setFieldErrors(errors);
 
-    if (!selectedFiles.length || !title || !inv_no || !inv_amt || !inv_type) {
-      setError("All fields and file are required");
-
-      return;
-    }
+if (editingInvoice) {
+  if ((!selectedFiles.length && !existingDocs.length) || !title || !inv_no || !inv_amt || !inv_type || !comment) {
+    setError("All fields are required");
+    return;
+  }
+} else {
+  if (!selectedFiles.length || !title || !inv_no || !inv_amt || !inv_type || !comment) {
+    setError("All fields are required");
+    return;
+  }
+}
+    
 
     if (kycRequired === "yes" && kycFiles.length === 0) {
       console.log("data24:");
@@ -565,14 +606,33 @@ function Dashboard({ role, department, userName, onLogout }) {
       kycFiles.forEach((f) => formData.append("kyc_docs[]", f));
     }
 
+    // Combine existing documents with new file names (prefixed with invoices/)
+    // const allDocuments = [
+    //   ...existingDocs,
+    //   ...selectedFiles.map(f => 'invoices/' + f.name)
+    // ];
+
+    // // Send combined documents list as document field
+    // formData.append("document", JSON.stringify(allDocuments));
+
+    // Send actual file objects for upload
+    for (let i = 0; i < existingDocs.length; i++) {
+      formData.append("document[]", existingDocs[i]);
+    }
     for (let i = 0; i < selectedFiles.length; i++) {
       formData.append("document[]", selectedFiles[i]);
     }
+
+    // Log what's being sent
+   // console.log("All Documents combined:", allDocuments);
+  //console.log("FormData document field:", formData.get("document"));
+    console.log("New Files to upload:", formData.getAll("document[]"));
 
     try {
       await uploadInvoice(formData);
       resetCreateFormState();
       setEditingInvoice(null);
+      setExistingDocs([]);
       setShowCreateModal(false);
       setRefresh(refresh + 1);
     } catch {
@@ -688,7 +748,24 @@ function Dashboard({ role, department, userName, onLogout }) {
     setComment(invoice.comment || "");
     setSelectedFiles([]);
     setError("");
+
+    let docs = [];
+    try {
+      if (Array.isArray(invoice.document)) {
+        docs = invoice.document;
+      } else if (typeof invoice.document === "string") {
+        docs = JSON.parse(invoice.document);
+      }
+    } catch {
+      docs = invoice.document ? [invoice.document] : [];
+    }
+console.log("Existing Docs1:",  invoice.document)
+//console.log("Existing Docs:", existingDocs)
+    setExistingDocs(docs);   // 👈 NEW
     setShowCreateModal(true);
+  };
+  const removeExistingDoc = (idx) => {
+    setExistingDocs(prev => prev.filter((_, i) => i !== idx));
   };
 
   // Pagination calculations
@@ -785,16 +862,20 @@ function Dashboard({ role, department, userName, onLogout }) {
               <input
                 className="dashboard-input"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  setFieldErrors(prev => ({ ...prev, title: false }));
+                }}
                 placeholder="Invoice Company"
                 style={{
                   width: "100%",
                   padding: "8px 12px",
                   borderRadius: "6px",
-                  border: "1px solid #ddd",
+                  border: fieldErrors.title ? "2px solid red" : "1px solid #ddd",
                   fontSize: "14px",
                 }}
               />
+              {fieldErrors.title && <div style={{ color: "red", fontSize: "13px", marginTop: "4px" }}>This field is required</div>}
             </div>
             <div className="modal-col">
               <label
@@ -806,17 +887,21 @@ function Dashboard({ role, department, userName, onLogout }) {
               <input
                 className="dashboard-input"
                 value={inv_no}
-                onChange={(e) => setInv_no(e.target.value)}
+                onChange={(e) => {
+                  setInv_no(e.target.value);
+                  setFieldErrors(prev => ({ ...prev, inv_no: false }));
+                }}
                 placeholder="Enter Invoice NO."
                 readOnly={!!editingInvoice}
                 style={{
                   width: "100%",
                   padding: "8px 12px",
                   borderRadius: "6px",
-                  border: "1px solid #ddd",
+                  border: fieldErrors.inv_no ? "2px solid red" : "1px solid #ddd",
                   fontSize: "14px",
                 }}
               />
+              {fieldErrors.inv_no && <div style={{ color: "red", fontSize: "13px", marginTop: "4px" }}>This field is required</div>}
             </div>
           </div>
           <div className="modal-row">
@@ -830,17 +915,21 @@ function Dashboard({ role, department, userName, onLogout }) {
               <input
                 className="dashboard-input"
                 value={inv_amt}
-                onChange={(e) => setInv_amt(e.target.value)}
+                onChange={(e) => {
+                  setInv_amt(e.target.value);
+                  setFieldErrors(prev => ({ ...prev, inv_amt: false }));
+                }}
                 placeholder="Enter Invoice Amount"
                 type="number"
                 style={{
                   width: "100%",
                   padding: "8px 12px",
                   borderRadius: "6px",
-                  border: "1px solid #ddd",
+                  border: fieldErrors.inv_amt ? "2px solid red" : "1px solid #ddd",
                   fontSize: "14px",
                 }}
               />
+              {fieldErrors.inv_amt && <div style={{ color: "red", fontSize: "13px", marginTop: "4px" }}>This field is required</div>}
             </div>
             <div className="modal-col">
               <label
@@ -852,12 +941,15 @@ function Dashboard({ role, department, userName, onLogout }) {
               <select
                 className="dashboard-input"
                 value={inv_type}
-                onChange={(e) => setInv_type(e.target.value)}
+                onChange={(e) => {
+                  setInv_type(e.target.value);
+                  setFieldErrors(prev => ({ ...prev, inv_type: false }));
+                }}
                 style={{
                   width: "100%",
                   padding: "8px 12px",
                   borderRadius: "6px",
-                  border: "1px solid #ddd",
+                  border: fieldErrors.inv_type ? "2px solid red" : "1px solid #ddd",
                   fontSize: "14px",
                   backgroundColor: "white",
                 }}
@@ -866,6 +958,7 @@ function Dashboard({ role, department, userName, onLogout }) {
                 <option value="PI">PI</option>
                 <option value="TI">TI</option>
               </select>
+              {fieldErrors.inv_type && <div style={{ color: "red", fontSize: "13px", marginTop: "4px" }}>This field is required</div>}
             </div>
           </div>
 
@@ -921,10 +1014,11 @@ function Dashboard({ role, department, userName, onLogout }) {
                     width: "100%",
                     padding: "8px 12px",
                     borderRadius: "6px",
-                    border: "1px solid #ddd",
+                    border: fieldErrors.kyc ? "2px solid red" : "1px solid #ddd",
                     fontSize: "14px",
                   }}
                 />
+                {fieldErrors.kyc && <div style={{ color: "red", fontSize: "13px", marginTop: "4px" }}>This field is required</div>}
                 {kycFiles.length > 0 && (
                   <>
                     <div style={{ marginTop: 6, fontSize: 13, color: "#555", marginBottom: 6 }}>
@@ -1006,18 +1100,22 @@ function Dashboard({ role, department, userName, onLogout }) {
             <textarea
               className="dashboard-input"
               value={comment}
-              onChange={(e) => setComment(e.target.value)}
+              onChange={(e) => {
+                setComment(e.target.value);
+                setFieldErrors(prev => ({ ...prev, comment: false }));
+              }}
               placeholder="Comment"
               style={{
                 width: "100%",
                 padding: "8px 12px",
                 borderRadius: "6px",
-                border: "1px solid " + "#ddd",
+                border: fieldErrors.comment ? "2px solid red" : "1px solid #ddd",
                 fontSize: "14px",
                 minHeight: "80px",
                 resize: "vertical",
               }}
             />
+            {fieldErrors.comment && <div style={{ color: "red", fontSize: "13px", marginTop: "4px" }}>This field is required</div>}
           </div>
           <div className="modal-col">
             <label
@@ -1026,40 +1124,96 @@ function Dashboard({ role, department, userName, onLogout }) {
             >
               File (PDF/Image)
             </label>
+
             <input
               className="dashboard-input"
               type="file"
               accept=".pdf,image/*"
               multiple
-              onChange={handleFileChange}
+              onChange={(e) => {
+                handleFileChange(e);
+                setFieldErrors(prev => ({ ...prev, files: false }));
+              }}
               style={{
                 width: "100%",
                 padding: "8px 12px",
                 borderRadius: "6px",
-                border: "1px solid #ddd",
+                border: fieldErrors.files ? "2px solid red" : "1px solid #ddd",
                 fontSize: "14px",
               }}
             />
+            {fieldErrors.files && <div style={{ color: "red", fontSize: "13px", marginTop: "4px" }}>This field is required</div>}
+
             <div style={{ marginTop: 8 }}>
+            {/* {console.log("Existing Docs:", existingDocs)} */}
+              {/* EXISTING FILES */}
+              {existingDocs.length > 0 && (
+                <>
+                  <div style={{ fontSize: 13, color: "#555", marginBottom: 6 }}>
+                    Existing Documents
+                  </div>
+
+                  {existingDocs.map((doc, idx) => (
+                    <div key={idx} style={{ background: "#eef5ff", borderRadius: 4 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", padding: 5 }}>
+                        <a
+                          href={`http://192.168.2.166:8000/storage/${doc}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            background: "#007bff",
+                            color: "#fff",
+                            padding: "3px 8px",
+                            borderRadius: 4,
+                            textDecoration: "none",
+                            fontSize: 13,
+                          }}
+                        >
+                          View
+                        </a>
+
+                        <span
+                          style={{
+                            maxWidth: 250,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            width: "80%",
+                          }}
+                        >
+                          {`Doc ${idx + 1}`}
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() => removeExistingDoc(idx)}
+                          style={{
+                            background: "none",
+                            border: "none",
+                            color: "#d9534f",
+                            fontSize: 16,
+                            cursor: "pointer",
+                          }}
+                          title="Remove file"
+                        >
+                          ✖
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+
+              {/* NEW FILES */}
               {selectedFiles.length > 0 && (
-                <div style={{ fontSize: 13, color: "#555", marginBottom: 6 }}>
-                  {selectedFiles.length} file{selectedFiles.length !== 1 ? "s" : ""} chosen
+                <div style={{ fontSize: 13, color: "#555", margin: "10px 0 6px" }}>
+                  New Files
                 </div>
               )}
+
               {selectedFiles.map((file, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    // display: "flex",
-                    // alignItems: "center",
-                    // justifyContent: "space-between",
-                    background: "#f7f7f7",
-                    // marginBottom: 4,
-                    // padding: "6px 12px",
-                    borderRadius: 4,
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px" }}>
+                <div key={idx} style={{ background: "#f7f7f7", borderRadius: 4 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "5px" }}>
                     <button
                       type="button"
                       onClick={() => {
@@ -1067,44 +1221,48 @@ function Dashboard({ role, department, userName, onLogout }) {
                         window.open(url);
                         setTimeout(() => URL.revokeObjectURL(url), 1000);
                       }}
-                      title="View file"
                       style={{
-                        background: "#007bffff",
-                        width: "10%",
+                        background: "#007bff",
                         border: "none",
+                        color: "#fff",
+                        padding: "3px 8px",
+                        borderRadius: 4,
                         cursor: "pointer",
-                        fontSize: 14,
-                        padding: "3px",
-                        margin: 0,
-                        minWidth: 20,
                       }}
                     >
                       View
                     </button>
-                    <span style={{ maxWidth: 250, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "80%" }}>{file.name}</span>
+
+                    <span
+                      style={{
+                        maxWidth: 250,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        width: "80%",
+                      }}
+                    >
+                      {file.name}
+                    </span>
 
                     <button
-                    type="button"
-                    onClick={() => removeFile(idx)}
-                    style={{
-                      background: "none",
-                      width: "10%",
-                      border: "none",
-                      color: "#d9534f",
-                      fontSize: 16,
-                      cursor: "pointer",
-                      padding: 0,
-                      margin: 0,
-                    }}
-                    title="Remove file"
-                  >
-                    ✖
-                  </button>
+                      type="button"
+                      onClick={() => removeFile(idx)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#d9534f",
+                        fontSize: 16,
+                        cursor: "pointer",
+                      }}
+                    >
+                      ✖
+                    </button>
                   </div>
-                  
                 </div>
               ))}
             </div>
+
           </div>
           </div>
           <div style={{ display: "flex", justifyContent: "end" }}> 
@@ -1124,7 +1282,7 @@ function Dashboard({ role, department, userName, onLogout }) {
                 fontWeight: "500",
               }}
             >
-              {editingInvoice ? "Save Corrections" : "Upload"}
+              {editingInvoice ? "Save" : "Upload"}
             </button>
           </div>
         </form>
@@ -1561,6 +1719,7 @@ function Dashboard({ role, department, userName, onLogout }) {
                                 inv_amt,
                                 current_role,
                                 comment,
+                                document,
                               })
                             }
                             title="Make Corrections"

@@ -36,6 +36,7 @@ export async function getInvoices(role) {
 }
 
 export async function uploadInvoice(formData) {
+  // console.log(formData);
   const token = localStorage.getItem('auth_token');
   const res = await fetch(API_BASE + '/invoices', {
     method: 'POST',
