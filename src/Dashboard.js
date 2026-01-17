@@ -1560,12 +1560,28 @@ function Dashboard({ role, department, userName, onLogout }) {
       />
 
       <div className="dashboard-table-wrapper">
-        <p style={{ fontSize: '16px', fontWeight: '600', marginBottom: '16px', color: '#333' }}>
-          Pending: <span style={{ color: '#ff9800', fontWeight: 'bold' }}>{counts.pending}</span> | 
-          {" "} Approved: <span style={{ color: '#2196f3', fontWeight: 'bold' }}>{counts.approved}</span> | 
-          {" "} Rejected: <span style={{ color: '#f44336', fontWeight: 'bold' }}>{counts.rejected}</span> | 
-          {" "} Completed: <span style={{ color: '#4caf50', fontWeight: 'bold' }}>{counts.completed}</span>
-        </p>
+        <div style={{ display: 'flex', gap: '16px', marginBottom: '5px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#fff3cd', padding: '5px', borderRadius: '8px', border: '1px solid #ff9800', minWidth: '120px', justifyContent: 'center' }}>
+            <i className="fas fa-clock" style={{ color: '#ff9800', marginRight: '8px' }}></i>
+            <span style={{ fontSize: '14px', fontWeight: '600', color: '#333', marginRight: '8px' }}>Pending : </span>
+            <span style={{ fontWeight: 'bold', color: '#ff9800' }}> {counts.pending}</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#d1ecf1', padding: '5px', borderRadius: '8px', border: '1px solid #2196f3', minWidth: '120px', justifyContent: 'center' }}>
+            <i className="fas fa-check" style={{ color: '#2196f3', marginRight: '8px' }}></i>
+            <span style={{ fontSize: '14px', fontWeight: '600', color: '#333', marginRight: '8px' }}>Approved: </span>
+            <span style={{ fontWeight: 'bold', color: '#2196f3' }}>{counts.approved}</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#f8d7da', padding: '5px', borderRadius: '8px', border: '1px solid #DC143C', minWidth: '120px', justifyContent: 'center' }}>
+            <i className="fas fa-times" style={{ color: '#DC143C', marginRight: '8px' }}></i>
+            <span style={{ fontSize: '14px', fontWeight: '600', color: '#333', marginRight: '8px' }}>Rejected: </span>
+            <span style={{ fontWeight: 'bold', color: '#DC143C' }}>{counts.rejected}</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#d4edda', padding: '5px', borderRadius: '8px', border: '1px solid #4caf50', minWidth: '120px', justifyContent: 'center' }}>
+            <i className="fas fa-check-circle" style={{ color: '#4caf50', marginRight: '8px' }}></i>
+            <span style={{ fontSize: '14px', fontWeight: '600', color: '#333', marginRight: '8px' }}>Completed: </span>
+            <span style={{ fontWeight: 'bold', color: '#4caf50' }}>{counts.completed}</span>
+          </div>
+        </div>
           
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
           
