@@ -92,7 +92,7 @@ function ViewDocumentsModal({ open, onClose, documentField }) {
               <div style={{ display: "flex", gap: "10px" }}>
                 {/* VIEW */}
                 <a
-                  href={`http://192.168.2.166:8000/storage/${doc}`}
+                  href={`http://192.168.2.52:8000/storage/${doc}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
@@ -108,7 +108,7 @@ function ViewDocumentsModal({ open, onClose, documentField }) {
 
                 {/* DOWNLOAD */}
                 <a
-                  href={`http://192.168.2.166:8000/api/download/${doc}`}
+                  href={`http://192.168.2.52:8000/api/download/${doc}`}
                   download
                   style={{
                     background: "#28a745",
@@ -146,7 +146,7 @@ function NotificationBell({ role, onViewInvoiceHistory }) {
   useEffect(() => {
     if (!role) return;
     fetch(
-      `http://192.168.2.166:8000/api/logs/latest?role=${role}`,
+      `http://192.168.2.52:8000/api/logs/latest?role=${role}`,
       {
         headers: {
           Authorization: "Bearer " + localStorage.getItem("auth_token"),
@@ -162,7 +162,7 @@ function NotificationBell({ role, onViewInvoiceHistory }) {
 
   const markAsSeen = () => {
     fetch(
-      `http://192.168.2.166:8000/api/logs/mark-seen?role=${role}`,
+      `http://192.168.2.52:8000/api/logs/mark-seen?role=${role}`,
       {
         method: "POST",
         headers: {
@@ -292,6 +292,14 @@ function Dashboard({ role, department, userName, onLogout }) {
   });
   const [existingDocs, setExistingDocs] = useState([]);
   const [existingKycDocs, setExistingKycDocs] = useState([]);
+  
+  // Invoice Counts
+  const [counts, setCounts] = useState({
+    pending: 0,
+    approved: 0,
+    rejected: 0,
+    completed: 0,
+  });
 
   const [title, setTitle] = useState("");
   const [comment, setComment] = useState("");
@@ -373,7 +381,7 @@ function Dashboard({ role, department, userName, onLogout }) {
       if (!role) return;
       try {
         const res = await fetch(
-          `http://192.168.2.166:8000/api/logs/latest?role=${role}`,
+          `http://192.168.2.52:8000/api/logs/latest?role=${role}`,
           {
             headers: {
               Authorization: "Bearer " + localStorage.getItem("auth_token"),
@@ -453,7 +461,7 @@ function Dashboard({ role, department, userName, onLogout }) {
         String(invoice.created_at || "")
           .toLowerCase()
           .includes(filters.created_at.toLowerCase()) &&
-        String(invoice.current_role || "")
+        String(roleDisplayMap[invoice.current_role] || invoice.current_role || "")
           .toLowerCase()
           .includes(filters.current_role.toLowerCase()) &&
         String(invoice.comment || "")
@@ -478,6 +486,9 @@ function Dashboard({ role, department, userName, onLogout }) {
       //console.log("Fetched invoices:", data);
       if (data.invoices) {
         setInvoices(data.invoices);
+        if (data.counts) {
+          setCounts(data.counts);
+        }
       } else {
         setInvoices(data);
       }
@@ -737,7 +748,7 @@ function Dashboard({ role, department, userName, onLogout }) {
 
     try {
       await fetch(
-        `http://192.168.2.166:8000/api/invoices/${finalModalInvoiceId}/final-upload`,
+        `http://192.168.2.52:8000/api/invoices/${finalModalInvoiceId}/final-upload`,
         {
           method: "POST",
           headers: {
@@ -1073,7 +1084,7 @@ function Dashboard({ role, department, userName, onLogout }) {
                       <div key={idx} style={{ background: "#eef5ff", borderRadius: 4 }}>
                         <div style={{ display: "flex", justifyContent: "space-between", padding: 5 }}>
                           <a
-                            href={`http://192.168.2.166:8000/storage/${doc}`}
+                            href={`http://192.168.2.52:8000/storage/${doc}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             style={{
@@ -1248,7 +1259,7 @@ function Dashboard({ role, department, userName, onLogout }) {
                     <div key={idx} style={{ background: "#eef5ff", borderRadius: 4 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", padding: 5 }}>
                         <a
-                          href={`http://192.168.2.166:8000/storage/${doc}`}
+                          href={`http://192.168.2.52:8000/storage/${doc}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{
@@ -1549,7 +1560,15 @@ function Dashboard({ role, department, userName, onLogout }) {
       />
 
       <div className="dashboard-table-wrapper">
+        <p style={{ fontSize: '16px', fontWeight: '600', marginBottom: '16px', color: '#333' }}>
+          Pending: <span style={{ color: '#ff9800', fontWeight: 'bold' }}>{counts.pending}</span> | 
+          {" "} Approved: <span style={{ color: '#2196f3', fontWeight: 'bold' }}>{counts.approved}</span> | 
+          {" "} Rejected: <span style={{ color: '#f44336', fontWeight: 'bold' }}>{counts.rejected}</span> | 
+          {" "} Completed: <span style={{ color: '#4caf50', fontWeight: 'bold' }}>{counts.completed}</span>
+        </p>
+          
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+          
           <label style={{ fontSize: '14px', color: '#555' }}>
             Show: 
             <select 
@@ -1568,7 +1587,9 @@ function Dashboard({ role, department, userName, onLogout }) {
             </select>
           </label>
         </div>
+        
         <table className="dashboard-table">
+         
           <thead>
             <tr>
               <th>Sr No.</th>
@@ -1711,7 +1732,11 @@ function Dashboard({ role, department, userName, onLogout }) {
                     current_role,
                     comment,
                     document,
-                    rej_yesno
+                    rej_yesno,
+                    displayYesNo,
+                    inv_found,
+                    approvedYesNo,
+                    rejectedTo_role,
                   },
                   i
                 ) => (
@@ -1767,7 +1792,7 @@ function Dashboard({ role, department, userName, onLogout }) {
                               ></i>
                             </button>
                           )}
-                        {role !== "admin" && role !== "final_accountant" && status !== "completed" && (
+                        {displayYesNo && role !== "admin" && role !== "final_accountant" && status !== "completed" && (
                           <>
                             <button
                               className="dashboard-btn dashboard-approve-btn"
@@ -1794,6 +1819,7 @@ function Dashboard({ role, department, userName, onLogout }) {
                                 minWidth: "auto",
                                 width: "32px",
                                 height: "32px",
+                                backgroundColor: "crimson",
                               }}
                             >
                               <i
@@ -1803,7 +1829,7 @@ function Dashboard({ role, department, userName, onLogout }) {
                             </button>
                           </>
                         )}
-                        {role === "admin" && status === "rejected" && (
+                        {role === "admin" && status === "rejected" && rejectedTo_role && rejectedTo_role.includes('admin') && (
                           <button
                             className="dashboard-btn dashboard-correction-btn"
                             onClick={() =>
@@ -1820,6 +1846,7 @@ function Dashboard({ role, department, userName, onLogout }) {
                                 document,
                                 kyc_required,
                                 kyc_docs,
+                                rejectedTo_role,
                               })
                             }
                             title="Make Corrections"
@@ -1828,7 +1855,7 @@ function Dashboard({ role, department, userName, onLogout }) {
                               minWidth: "auto",
                               width: "32px",
                               height: "32px",
-                              backgroundColor: "#dc3545",
+                              backgroundColor: "crimson",
                             }}
                           >
                             <i
@@ -1843,7 +1870,14 @@ function Dashboard({ role, department, userName, onLogout }) {
                     <td>{department}</td>
                     <td>{status}</td>
                     <td>{inv_type}</td>
-                    <td>{inv_no}</td>
+                    <td style={{
+                      backgroundColor: status === "completed" ? "green" : status === "rejected" && rejectedTo_role && rejectedTo_role.includes(role) ? "crimson" :role === "admin"|| (status === "pending" && (approvedYesNo))|| (inv_found) || status === "corrected" || status === "rejected" && rejectedTo_role && !rejectedTo_role.includes(role) ? "skyblue" : "transparent",
+                      color: (status === "completed" || (status === "rejected" && rejectedTo_role && rejectedTo_role.includes(role))) ? "white" : "inherit",
+                      padding: "8px 12px",
+                      borderRadius: "4px",
+                      textAlign: "center",
+                      fontWeight: "bold"
+                    }}>{inv_no}</td>
                     <td>{inv_amt}</td>
                     <td>{created_at ? new Date(created_at).toLocaleDateString() : ""}</td>
                     <td>

@@ -40,11 +40,7 @@ function InvoiceHistoryPage({role, invoiceId, onBack }) {
   const handlePrintEntirePage = () => {
     const printWindow = window.open('', '_blank');
     
-    // Get the print area content
-    const printArea = document.getElementById('print-area');
-    let htmlContent = printArea.innerHTML;
-
-    const fullHTML = `
+    let htmlContent = `
       <!DOCTYPE html>
       <html>
       <head>
@@ -57,49 +53,224 @@ function InvoiceHistoryPage({role, invoiceId, onBack }) {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-            color-adjust: exact !important;
           }
           body {
             font-family: Arial, sans-serif;
             line-height: 1.6;
             color: #333;
-            background: white;
+            background: #f5f5f5;
             padding: 20px;
           }
-          header, button, .modal, [style*="position: fixed"] {
-            display: none !important;
+          .print-container {
+            background: white;
+            max-width: 1000px;
+            margin: 0 auto;
+          }
+          .print-header {
+            background: #085EE3;
+            color: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+          }
+          .print-header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+          }
+          .print-header p {
+            font-size: 14px;
+            opacity: 0.9;
+          }
+          .invoice-card {
+            border: 1px solid #e0e0e0;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            background: white;
+            page-break-inside: avoid;
+          }
+          .invoice-card h3 {
+            color: #085EE3;
+            margin-bottom: 15px;
+            font-size: 18px;
+            border-bottom: 2px solid #085EE3;
+            padding-bottom: 10px;
+          }
+          .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+          }
+          .info-item {
+            display: flex;
+            flex-direction: column;
+          }
+          .info-label {
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 5px;
+            font-size: 12px;
+            text-transform: uppercase;
+          }
+          .info-value {
+            font-size: 14px;
+            color: #333;
+          }
+          .changed {
+            background-color: #ffe5a0;
+            padding: 5px;
+            border-radius: 4px;
           }
           table {
             width: 100%;
             border-collapse: collapse;
-            margin: 15px 0;
+            margin-top: 15px;
+            page-break-inside: avoid;
           }
-          th, td {
+          table th {
+            background: #f6f6f6;
             padding: 10px;
-            border-bottom: 1px solid #ddd;
             text-align: left;
-          }
-          th {
-            background: #f6f6f6 !important;
             font-weight: bold;
+            border-bottom: 2px solid #ddd;
+            font-size: 12px;
+          }
+          table td {
+            padding: 10px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+          }
+          table tr:hover {
+            background: #f9f9f9;
+          }
+          .action-history {
+            margin-top: 20px;
+            page-break-inside: avoid;
+          }
+          .action-history h4 {
+            color: #085EE3;
+            margin-bottom: 10px;
+            font-size: 14px;
           }
           @media print {
             body {
-              margin: 0;
-              padding: 10px;
+              background: white;
+              padding: 0;
+            }
+            .invoice-card {
+              page-break-inside: avoid;
+              break-inside: avoid;
+            }
+            table {
+              page-break-inside: avoid;
+              break-inside: avoid;
+            }
+            tr {
+              page-break-inside: avoid;
+              break-inside: avoid;
             }
           }
         </style>
       </head>
       <body>
-        ${htmlContent}
+        <div class="print-container">
+          <div class="print-header">
+            <h1>Invoice History</h1>
+            <p>INV No: ${invNo}</p>
+          </div>
+    `;
+
+    invoices.forEach((invoice, index) => {
+      const prev = index > 0 ? invoices[index - 1] : null;
+      const changed = (field) => prev && invoice[field] !== prev[field];
+      const docs = JSON.parse(invoice.document || "[]");
+
+      htmlContent += `
+        <div class="invoice-card">
+          <h3>Invoice Record #${index + 1}</h3>
+          
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">Company</span>
+              <span class="info-value ${changed("title") ? "changed" : ""}">${invoice.title}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Department</span>
+              <span class="info-value">${invoice.department}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Status</span>
+              <span class="info-value">${invoice.status}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Invoice Type</span>
+              <span class="info-value ${changed("inv_type") ? "changed" : ""}">${invoice.inv_type}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Invoice No</span>
+              <span class="info-value ${changed("inv_no") ? "changed" : ""}">${invoice.inv_no}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Invoice Amount</span>
+              <span class="info-value ${changed("inv_amt") ? "changed" : ""}">₹ ${invoice.inv_amt}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Current Role</span>
+              <span class="info-value">${roleDisplayMap[invoice.current_role] || invoice.current_role}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Comment</span>
+              <span class="info-value ${changed("comment") ? "changed" : ""}">${invoice.comment || "-"}</span>
+            </div>
+          </div>
+
+          ${invoice?.final_document ? `
+            <div style="margin: 15px 0; padding: 10px; background: #d4edda; border-radius: 4px;">
+              <strong style="color: #155724;">✓ Final Document Available</strong>
+            </div>
+          ` : ''}
+
+          <div style="margin: 15px 0; padding: 10px; background: #e7f3ff; border-radius: 4px;">
+            <strong>Documents: </strong> ${docs.length > 0 ? `${docs.length} file(s)` : "No documents"}
+          </div>
+
+          ${showAllLogs && invoice.logs && invoice.logs.length > 0 ? `
+            <div class="action-history">
+              <h4>Action History</h4>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>User/Role</th>
+                    <th>Action</th>
+                    <th>Comment</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${invoice.logs.map(log => `
+                    <tr>
+                      <td>${new Date(log.created_at).toLocaleString()}</td>
+                      <td>${log.user?.name || (roleDisplayMap[log.role] || log.role)}</td>
+                      <td><strong>${log.action.toUpperCase()}</strong></td>
+                      <td>${log.comment || "-"}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    });
+
+    htmlContent += `
+        </div>
       </body>
       </html>
     `;
 
-    printWindow.document.write(fullHTML);
+    printWindow.document.write(htmlContent);
     printWindow.document.close();
     
     setTimeout(() => {
