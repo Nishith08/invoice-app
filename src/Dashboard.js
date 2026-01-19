@@ -1561,7 +1561,7 @@ function Dashboard({ role, department, userName, onLogout }) {
 
       <div className="dashboard-table-wrapper">
         <div style={{ display: 'flex', gap: '16px', marginBottom: '5px', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#fff3cd', padding: '5px', borderRadius: '8px', border: '1px solid #ff9800', minWidth: '120px', justifyContent: 'center' }}>
+          {/* <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#fff3cd', padding: '5px', borderRadius: '8px', border: '1px solid #ff9800', minWidth: '120px', justifyContent: 'center' }}>
             <i className="fas fa-clock" style={{ color: '#ff9800', marginRight: '8px' }}></i>
             <span style={{ fontSize: '14px', fontWeight: '600', color: '#333', marginRight: '8px' }}>Pending : </span>
             <span style={{ fontWeight: 'bold', color: '#ff9800' }}> {counts.pending}</span>
@@ -1570,21 +1570,25 @@ function Dashboard({ role, department, userName, onLogout }) {
             <i className="fas fa-check" style={{ color: '#2196f3', marginRight: '8px' }}></i>
             <span style={{ fontSize: '14px', fontWeight: '600', color: '#333', marginRight: '8px' }}>Approved: </span>
             <span style={{ fontWeight: 'bold', color: '#2196f3' }}>{counts.approved}</span>
-          </div>
-          {/* <div style={{ display: 'flex', alignItems: 'center',  padding: '5px', borderRadius: '8px', border: '1px solid #000', minWidth: '120px', justifyContent: 'center' }}>
-            <i className="fas fa-clock" style={{  marginRight: '8px' }}></i>
-            <span style={{ fontSize: '14px', fontWeight: '600', color: '#333', marginRight: '8px' }}>Pending : </span>
-            <span style={{ fontWeight: 'bold' }}> {counts.pending}</span>
+          </div> */}
+          {role !== "admin" && (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center',  padding: '5px', borderRadius: '8px', border: '1px solid #000', minWidth: '120px', justifyContent: 'center' }}>
+              <i className="fas fa-clock" style={{  marginRight: '8px' }}></i>
+              <span style={{ fontSize: '14px', fontWeight: '600', color: '#333', marginRight: '8px' }}>Pending : </span>
+              <span style={{ fontWeight: 'bold' }}> {counts.pending}</span>
+            </div>
+          </>
+          )}
+          <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#f8d7da', padding: '5px', borderRadius: '8px', border: '1px solid #DC143C', minWidth: '120px', justifyContent: 'center' }}>
+            <i className="fas fa-times" style={{ color: '#DC143C', marginRight: '8px' }}></i>
+            <span style={{ fontSize: '14px', fontWeight: '600', color: '#333', marginRight: '8px' }}>Rejected: </span>
+            <span style={{ fontWeight: 'bold', color: '#DC143C' }}>{counts.rejected}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', padding: '5px', borderRadius: '8px', border: '1px solid #000', minWidth: '120px', justifyContent: 'center' }}>
             <i className="fas fa-check" style={{marginRight: '8px' }}></i>
             <span style={{ fontSize: '14px', fontWeight: '600', color: '#333', marginRight: '8px' }}>Approved: </span>
             <span style={{ fontWeight: 'bold',  }}>{counts.approved}</span>
-          </div> */}
-          <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#f8d7da', padding: '5px', borderRadius: '8px', border: '1px solid #DC143C', minWidth: '120px', justifyContent: 'center' }}>
-            <i className="fas fa-times" style={{ color: '#DC143C', marginRight: '8px' }}></i>
-            <span style={{ fontSize: '14px', fontWeight: '600', color: '#333', marginRight: '8px' }}>Rejected: </span>
-            <span style={{ fontWeight: 'bold', color: '#DC143C' }}>{counts.rejected}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#d4edda', padding: '5px', borderRadius: '8px', border: '1px solid #4caf50', minWidth: '120px', justifyContent: 'center' }}>
             <i className="fas fa-check-circle" style={{ color: '#4caf50', marginRight: '8px' }}></i>
