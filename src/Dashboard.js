@@ -1571,6 +1571,16 @@ function Dashboard({ role, department, userName, onLogout }) {
             <span style={{ fontSize: '14px', fontWeight: '600', color: '#333', marginRight: '8px' }}>Approved: </span>
             <span style={{ fontWeight: 'bold', color: '#2196f3' }}>{counts.approved}</span>
           </div>
+          {/* <div style={{ display: 'flex', alignItems: 'center',  padding: '5px', borderRadius: '8px', border: '1px solid #000', minWidth: '120px', justifyContent: 'center' }}>
+            <i className="fas fa-clock" style={{  marginRight: '8px' }}></i>
+            <span style={{ fontSize: '14px', fontWeight: '600', color: '#333', marginRight: '8px' }}>Pending : </span>
+            <span style={{ fontWeight: 'bold' }}> {counts.pending}</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', padding: '5px', borderRadius: '8px', border: '1px solid #000', minWidth: '120px', justifyContent: 'center' }}>
+            <i className="fas fa-check" style={{marginRight: '8px' }}></i>
+            <span style={{ fontSize: '14px', fontWeight: '600', color: '#333', marginRight: '8px' }}>Approved: </span>
+            <span style={{ fontWeight: 'bold',  }}>{counts.approved}</span>
+          </div> */}
           <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#f8d7da', padding: '5px', borderRadius: '8px', border: '1px solid #DC143C', minWidth: '120px', justifyContent: 'center' }}>
             <i className="fas fa-times" style={{ color: '#DC143C', marginRight: '8px' }}></i>
             <span style={{ fontSize: '14px', fontWeight: '600', color: '#333', marginRight: '8px' }}>Rejected: </span>
