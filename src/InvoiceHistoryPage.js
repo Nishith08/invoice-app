@@ -343,6 +343,7 @@ function InvoiceHistoryPage({role, invoiceId, onBack }) {
                         <th style={{ ...cellStyle, textAlign: 'left' }}>Time</th>
                         <th style={{ ...cellStyle, textAlign: 'left' }}>User/Role</th>
                         <th style={{ ...cellStyle, textAlign: 'left' }}>Action</th>
+                        <th style={{ ...cellStyle, textAlign: 'left' }}>Rejected To</th>
                         <th style={{ ...cellStyle, textAlign: 'left' }}>Comment</th>
                       </tr>
                     </thead>
@@ -352,6 +353,7 @@ function InvoiceHistoryPage({role, invoiceId, onBack }) {
                           <td style={cellStyle}>{new Date(log.created_at).toLocaleString()}</td>
                           <td style={cellStyle}>{log.user?.name || (roleDisplayMap[log.role] || log.role)}</td>
                           <td style={cellStyle}><b>{log.action.toUpperCase()}</b></td>
+                          <td style={cellStyle}>{roleDisplayMap[log.rejected_to] || "-"}</td>
                           <td style={cellStyle}>{log.comment || "-"}</td>
                         </tr>
                       ))}

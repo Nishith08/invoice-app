@@ -1566,30 +1566,37 @@ function Dashboard({ role, department, userName, onLogout }) {
             <span style={{ fontSize: '14px', fontWeight: '600', color: '#333', marginRight: '8px' }}>Pending : </span>
             <span style={{ fontWeight: 'bold', color: '#ff9800' }}> {counts.pending}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#d1ecf1', padding: '5px', borderRadius: '8px', border: '1px solid #2196f3', minWidth: '120px', justifyContent: 'center' }}>
-            <i className="fas fa-check" style={{ color: '#2196f3', marginRight: '8px' }}></i>
-            <span style={{ fontSize: '14px', fontWeight: '600', color: '#333', marginRight: '8px' }}>Approved: </span>
-            <span style={{ fontWeight: 'bold', color: '#2196f3' }}>{counts.approved}</span>
-          </div> */}
-          {role !== "admin" && (
-          <>
-            <div style={{ display: 'flex', alignItems: 'center',  padding: '5px', borderRadius: '8px', border: '1px solid #000', minWidth: '120px', justifyContent: 'center' }}>
-              <i className="fas fa-clock" style={{  marginRight: '8px' }}></i>
-              <span style={{ fontSize: '14px', fontWeight: '600', color: '#333', marginRight: '8px' }}>Pending : </span>
-              <span style={{ fontWeight: 'bold' }}> {counts.pending}</span>
-            </div>
-          </>
-          )}
-          <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#f8d7da', padding: '5px', borderRadius: '8px', border: '1px solid #DC143C', minWidth: '120px', justifyContent: 'center' }}>
-            <i className="fas fa-times" style={{ color: '#DC143C', marginRight: '8px' }}></i>
-            <span style={{ fontSize: '14px', fontWeight: '600', color: '#333', marginRight: '8px' }}>Rejected: </span>
-            <span style={{ fontWeight: 'bold', color: '#DC143C' }}>{counts.rejected}</span>
-          </div>
           <div style={{ display: 'flex', alignItems: 'center', padding: '5px', borderRadius: '8px', border: '1px solid #000', minWidth: '120px', justifyContent: 'center' }}>
             <i className="fas fa-check" style={{marginRight: '8px' }}></i>
             <span style={{ fontSize: '14px', fontWeight: '600', color: '#333', marginRight: '8px' }}>Approved: </span>
             <span style={{ fontWeight: 'bold',  }}>{counts.approved}</span>
           </div>
+          */}
+          
+            <div style={{ display: 'flex', alignItems: 'center',  padding: '5px', borderRadius: '8px', border: '1px solid #000', minWidth: '120px', justifyContent: 'center' }}>
+              <i className="fas fa-clock" style={{  marginRight: '8px' }}></i>
+              <span style={{ fontSize: '14px', fontWeight: '600', color: '#333', marginRight: '8px' }}>Pending : </span>
+              <span style={{ fontWeight: 'bold' }}> {counts.pending}</span>
+            </div>
+          
+          {role !== "admin" && (
+          <>
+          <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#f8d7da', padding: '5px', borderRadius: '8px', border: '1px solid #DC143C', minWidth: '120px', justifyContent: 'center' }}>
+            <i className="fas fa-times" style={{ color: '#DC143C', marginRight: '8px' }}></i>
+            <span style={{ fontSize: '14px', fontWeight: '600', color: '#333', marginRight: '8px' }}>Rejected: </span>
+            <span style={{ fontWeight: 'bold', color: '#DC143C' }}>{counts.rejected}</span>
+          </div>
+          </>
+          )}
+          {role !== "accounts_3rd" && (
+          <>
+          <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#d1ecf1', padding: '5px', borderRadius: '8px', border: '1px solid #2196f3', minWidth: '120px', justifyContent: 'center' }}>
+            <i className="fas fa-check" style={{ color: '#2196f3', marginRight: '8px' }}></i>
+            <span style={{ fontSize: '14px', fontWeight: '600', color: '#333', marginRight: '8px' }}>Approved: </span>
+            <span style={{ fontWeight: 'bold', color: '#2196f3' }}>{counts.approved}</span>
+          </div> 
+          </>
+          )}
           <div style={{ display: 'flex', alignItems: 'center', backgroundColor: '#d4edda', padding: '5px', borderRadius: '8px', border: '1px solid #4caf50', minWidth: '120px', justifyContent: 'center' }}>
             <i className="fas fa-check-circle" style={{ color: '#4caf50', marginRight: '8px' }}></i>
             <span style={{ fontSize: '14px', fontWeight: '600', color: '#333', marginRight: '8px' }}>Completed: </span>
@@ -1762,8 +1769,8 @@ function Dashboard({ role, department, userName, onLogout }) {
                     current_role,
                     comment,
                     document,
-                    rej_yesno,
                     displayYesNo,
+                    rjbyrole,
                     inv_found,
                     approvedYesNo,
                     rejectedTo_role,
@@ -1901,13 +1908,20 @@ function Dashboard({ role, department, userName, onLogout }) {
                     <td>{status}</td>
                     <td>{inv_type}</td>
                     <td style={{
+                      backgroundColor: (role === "admin" && status === "rejected" && rejectedTo_role && rejectedTo_role.includes('admin')) || (displayYesNo && role !== "admin" && role !== "final_accountant" && status !== "completed")  ? "transparent" : status === "completed" ? "green" : (rjbyrole) ? "crimson": "skyblue",
+                      padding: "8px 12px",
+                      borderRadius: "4px",
+                      textAlign: "center",
+                      fontWeight: "bold"
+                    }}>{inv_no}</td>
+                    {/* <td style={{
                       backgroundColor: status === "completed" ? "green" : status === "rejected" && rejectedTo_role && rejectedTo_role.includes(role) ? "crimson" :role === "admin"|| (status === "pending" && (approvedYesNo))|| (inv_found) || status === "corrected" || status === "rejected" && rejectedTo_role && !rejectedTo_role.includes(role) ? "skyblue" : "transparent",
                       color: (status === "completed" || (status === "rejected" && rejectedTo_role && rejectedTo_role.includes(role))) ? "white" : "inherit",
                       padding: "8px 12px",
                       borderRadius: "4px",
                       textAlign: "center",
                       fontWeight: "bold"
-                    }}>{inv_no}</td>
+                    }}>{inv_no}</td> */}
                     <td>{inv_amt}</td>
                     <td>{created_at ? new Date(created_at).toLocaleDateString() : ""}</td>
                     <td>
