@@ -321,6 +321,8 @@ function Dashboard({ role, department, userName, onLogout }) {
   const [commentError, setCommentError] = useState(false);
   const [queryError, setQueryError] = useState(false);
 
+  const [uploading, setUploading] = useState(false);
+
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [inv_type, setInv_type] = useState("");
   const [inv_no, setInv_no] = useState("");
@@ -550,6 +552,7 @@ function Dashboard({ role, department, userName, onLogout }) {
   };
 
   const handleCloseCreateModal = () => {
+    if (uploading) return;
     setShowCreateModal(false);
     setEditingInvoice(null);
     resetCreateFormState();
@@ -563,9 +566,11 @@ function Dashboard({ role, department, userName, onLogout }) {
       kyc: false,
     });
   };
-    async function handleUpload(e) {
-      e.preventDefault();
-      console.log("hello form upload");
+  async function handleUpload(e) {
+    e.preventDefault();
+    console.log("hello form upload");
+
+    setUploading(true);
 
       const errors = {
         title: !title,
@@ -590,19 +595,23 @@ function Dashboard({ role, department, userName, onLogout }) {
           !title || !inv_no || !inv_amt || !inv_type || !comment
         ) {
           setError("All fields are required");
+          setUploading(false);
           return;
         }
          if (kycRequired === "yes" && !kycFiles.length && (!kycFiles.length && !existingKycDocs.length)) {
         setError("Please upload KYC documents when KYC is required.");
+        setUploading(false);
         return;
       }
       } else {
         if (!selectedFiles.length || !title || !inv_no || !inv_amt || !inv_type || !comment) {
           setError("All fields are required");
+          setUploading(false);
           return;
         }
          if (kycRequired === "yes" && !kycFiles.length ) {
         setError("Please upload KYC documents when KYC is required.");
+        setUploading(false);
         return;
       }
       }
@@ -659,9 +668,11 @@ function Dashboard({ role, department, userName, onLogout }) {
         setExistingKycDocs([]);
         setShowCreateModal(false);
         setRefresh(refresh + 1);
+        setUploading(false);
 
       } catch {
         setError("Upload failed");
+        setUploading(false);
       }
     }
 
@@ -1378,6 +1389,7 @@ function Dashboard({ role, department, userName, onLogout }) {
             <button
               type="submit"
               className="dashboard-btn"
+              disabled={uploading}
               style={{
                 marginTop: "8px",
                 width: "100px",
@@ -1386,12 +1398,12 @@ function Dashboard({ role, department, userName, onLogout }) {
                 color: "white",
                 border: "none",
                 borderRadius: "6px",
-                cursor: "pointer",
+                cursor: uploading ? "not-allowed" : "pointer",
                 fontSize: "16px",
                 fontWeight: "500",
               }}
             >
-              {editingInvoice ? "Save" : "Upload"}
+              {uploading ? <><i className="fas fa-spinner fa-spin"></i> &nbsp;Loading...</> : editingInvoice ? "Save" : "Upload"}
             </button>
           </div>
         </form>
@@ -1470,7 +1482,7 @@ function Dashboard({ role, department, userName, onLogout }) {
           )}
           {actionType !== "approve" && (
             <>
-              <label style={{ display: "block", marginTop: 8 }}>Query</label>
+              <label style={{ display: "block", marginBottom: 5 }}>Query</label>
               <input
                 value={actionQuery}
                 onChange={(e) => {
@@ -1478,7 +1490,7 @@ function Dashboard({ role, department, userName, onLogout }) {
                   setQueryError(false);
                 }}
                 style={{
-                  width: "100%",
+                  width: "-webkit-fill-available",
                   padding: 8,
                   border: queryError ? "2px solid red" : undefined,
                 }}
@@ -1492,7 +1504,7 @@ function Dashboard({ role, department, userName, onLogout }) {
               )}
               {role !== "purchase_office" && (
               <>
-              <label style={{ display: "block", marginTop: 10 }}>
+              <label style={{ display: "block", marginBottom: 5, marginTop: 10 }}>
                 Select Role
               </label>
               <select
